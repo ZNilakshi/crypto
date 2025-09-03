@@ -23,7 +23,7 @@ export const getEmailFromUsername = async (req, res) => {
       const { fullName, username, email, phoneNumber, referralCode, firebaseUid } = req.body;
   
       // Check username availability
-      const usernameTaken = await User.findOne({ username: username.toLowerCase() });
+      const usernameTaken = await User.findOne({ username: username});
       if (usernameTaken) {
         return res.status(400).json({ message: "❌ Username already taken" });
       }
@@ -41,7 +41,7 @@ export const getEmailFromUsername = async (req, res) => {
       const newUser = new User({
         firebaseUid,
         fullName: fullName.trim(),
-        username: username.toLowerCase().trim(),
+        username: username.trim(),
         email: email.toLowerCase().trim(),
         phoneNumber: phoneNumber ? phoneNumber.trim() : "",
         referredBy: referrer ? referrer._id : null,
@@ -112,13 +112,16 @@ export const checkUsername = async (req, res) => {
       return res.status(400).json({ message: "❌ Username is required" });
     }
 
-    const user = await User.findOne({ username: username.toLowerCase() });
+    // 🔹 Keep original case
+    const user = await User.findOne({ username });
+
     return res.json({ available: !user });
   } catch (err) {
     console.error("❌ Error checking username:", err);
     res.status(500).json({ message: "❌ Server error" });
   }
 };
+
 // Get user role by Firebase UID
 export const getRoleByUid = async (req, res) => {
   try {

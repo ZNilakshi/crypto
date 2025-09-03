@@ -1,7 +1,7 @@
 import Deposit from "../../models/Deposit.js";
 import User from "../../models/User.js";
 
-// ✅ Get all deposits (admin view)
+//  Get all deposits (admin view)
 export const getAllDeposits = async (req, res) => {
   try {
     const deposits = await Deposit.find().populate("user", "username email");
@@ -12,7 +12,7 @@ export const getAllDeposits = async (req, res) => {
   }
 };
 
-// ✅ Approve / Reject deposit
+//  Approve / Reject deposit
 export const updateDepositStatus = async (req, res) => {
   try {
     const { depositId } = req.params;
@@ -30,7 +30,7 @@ export const updateDepositStatus = async (req, res) => {
     deposit.status = status;
     await deposit.save();
 
-    // ✅ If confirmed, update user's balance
+    //  If confirmed, update user's balance
     if (status === "confirmed") {
       const user = await User.findById(deposit.user);
       if (user) {

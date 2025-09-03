@@ -60,16 +60,16 @@ const userSchema = new mongoose.Schema({
     sparse: true
   },
   referredBy: {
-    type: mongoose.Schema.Types.ObjectId, // ✅ Changed from String to ObjectId
+    type: mongoose.Schema.Types.ObjectId, 
     ref: 'User',
     default: null
   },
   directReferrals: [{
-    type: mongoose.Schema.Types.ObjectId, // ✅ Changed from incorrect type
+    type: mongoose.Schema.Types.ObjectId, 
     ref: 'User'
   }],
   indirectReferrals: [{
-    type: mongoose.Schema.Types.ObjectId, // ✅ Changed from incorrect type
+    type: mongoose.Schema.Types.ObjectId, 
     ref: 'User'
   }],
 
