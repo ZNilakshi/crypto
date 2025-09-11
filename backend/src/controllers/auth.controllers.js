@@ -1,6 +1,5 @@
 import admin from "../config/firebase.js";
 import User from "../models/User.js";
-import { updateHierarchyAndCommissions } from "../controllers/user.controllers.js"; 
 
 // Get email from username
 export const getEmailFromUsername = async (req, res) => {
@@ -45,7 +44,11 @@ export const getEmailFromUsername = async (req, res) => {
         email: email.toLowerCase().trim(),
         phoneNumber: phoneNumber ? phoneNumber.trim() : "",
         referredBy: referrer ? referrer._id : null,
-        layer: referrer ? referrer.layer + 1 : 0,
+        level: 0, 
+        walletBalance: 0,
+      stakingBalance: 0,
+      commissionBalance: 0
+      
       });
   
       await newUser.save();
@@ -55,10 +58,8 @@ export const getEmailFromUsername = async (req, res) => {
         referrer.directReferrals.push(newUser._id);
         await referrer.save();
         
-        // Initialize commission tracking with 0 deposit
-        await updateHierarchyAndCommissions(newUser, referrer, 0);
-      }
-  
+           }
+ 
       res.status(201).json({ 
         message: "✅ User registered successfully", 
         user: {

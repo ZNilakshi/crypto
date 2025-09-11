@@ -83,3 +83,11 @@ export const optionalAuth = async (req, res, next) => {
     next();
   }
 };
+// ... (keep existing verifyFirebaseToken and optionalAuth)
+
+export const isAdmin = (req, res, next) => {
+  if (req.user.role !== 'crypto_admin') {
+    return res.status(403).json({ message: "❌ Admin access only" });
+  }
+  next();
+};

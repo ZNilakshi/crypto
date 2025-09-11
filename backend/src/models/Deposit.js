@@ -1,17 +1,14 @@
+// models/Deposit.js
 import mongoose from "mongoose";
 
 const depositSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  amount: { type: Number, required: true },
-  transactionHash: { type: String, required: true, unique: true },
+  amount: { type: Number, required: true, min: 10 }, // enforce minimum 10
+  txHash: { type: String, required: true, unique: true, trim: true },
   network: { type: String, enum: ["TRC20", "BEP20"], required: true },
-  status: {
-    type: String,
-    enum: ["pending", "confirmed", "rejected"],
-    default: "pending",
-  },
-  cryptoAddress: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
+  systemWallet: { type: String, required: true }, // backend-assigned wallet
+  status: { type: String, enum: ["PENDING", "APPROVED", "REJECTED"], default: "PENDING" },
+  isFirstDepositForUser: { type: Boolean, default: false },
+}, { timestamps: true });
 
 export default mongoose.model("Deposit", depositSchema);

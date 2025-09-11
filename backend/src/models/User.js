@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema({
   firebaseUid: {
@@ -47,7 +48,6 @@ const userSchema = new mongoose.Schema({
   walletType: {
     type: String,
     enum: ["TRC20", "BEP20"],
-    default: "TRC20",
   },
   role: {
     type: String,
@@ -64,28 +64,23 @@ const userSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
+  level: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 6
+  },
   directReferrals: [{
-    type: mongoose.Schema.Types.ObjectId, 
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  indirectReferrals: [{
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User'
-  }],
-
- // Commission tracking
- directCommissions: { type: Number, default: 0 },
- layer1_3Commissions: { type: Number, default: 0 }, // ✅ covers layers 2–3
- totalGroupStakes: { type: Number, default: 0 },
-
- // Stakes (top-up balance)
- totalStakes: { type: Number, default: 0 },
-
- // Level (0–3 only)
- level: { type: Number, enum: [0, 1, 2, 3], default: 0 },
-
- // Wallet balance
- walletBalance: { type: Number, default: 0 },
+  walletBalance: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  totalStakes: { type: Number, default: 0 },               // total active staked amount
+  totalCommissionEarned: { type: Number, default: 0 },     // lifetime commissions
 
   emailVerified: {
     type: Boolean,
@@ -106,7 +101,20 @@ const userSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
-  }
+  },
+  // helper flags for logic
+  firstDepositDone: { type: Boolean, default: false },     // has this user made a first confirmed deposit?
+  referralUnlocked: { type: Boolean, default: false },     // set true once walletBalance top-up >= 100 (one-time gate)
+
+  // audit
+  lastLevelUpdatedAt: { type: Date, default: null },
+}, { timestamps: true });
+
+// models/User.js
+userSchema.virtual("activeDownlines", {
+  ref: "User",
+  localField: "_id",
+  foreignField: "referredBy",
 });
 
 // Generate referral code before saving
@@ -126,17 +134,23 @@ userSchema.methods.generateReferralCode = function() {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return `REF_${code}`;
+};
 
-};// Add this method to your userSchema
+// Verify security password
 userSchema.methods.verifySecurityPassword = async function(password) {
   if (!this.securityPassword) {
     throw new Error('Security password not set');
   }
-  
   return await bcrypt.compare(password, this.securityPassword);
 };
 
-// Also add this to your imports at the to
+userSchema.pre('save', async function(next) {
+  if (this.isModified('securityPassword') && this.securityPassword) {
+    this.securityPassword = await bcrypt.hash(this.securityPassword, 12);
+  }
+  next();
+});
+
 // Static method to check username availability
 userSchema.statics.isUsernameAvailable = async function(username) {
   const user = await this.findOne({ 
