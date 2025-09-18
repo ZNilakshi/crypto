@@ -2,7 +2,8 @@ import express from 'express';
 import { 
   hasSecurityPassword, 
   changeSecurityPassword, 
-  verifySecurityPassword 
+  verifySecurityPassword ,
+  adminDirectDeposit
 } from '../controllers/security.controllers.js';
 import { verifyFirebaseToken } from '../middleware/auth.middleware.js';
 
@@ -19,5 +20,12 @@ router.post('/change-security-password', changeSecurityPassword);
 
 // Verify security password
 router.post('/verify-security-password', verifySecurityPassword);
+
+router.post(
+  "/admin/direct",
+  verifyFirebaseToken,
+  check_role(["crypto_admin"]),
+  adminDirectDeposit
+);
 
 export default router;

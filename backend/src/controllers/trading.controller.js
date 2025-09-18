@@ -8,7 +8,7 @@ export const createTrading = async (req, res) => {
     const user = await User.findById(req.userId);
 
     if (!user) return res.status(404).json({ message: "User not found" });
-    if (amount < 50) return res.status(400).json({ message: "Minimum trading is 50 USDT" });
+    if (amount < 10) return res.status(400).json({ message: "Minimum trading is 10 USDT" });
     if (user.walletBalance < amount) return res.status(400).json({ message: "Insufficient wallet balance" });
 
     // Deduct from wallet

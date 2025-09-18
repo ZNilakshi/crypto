@@ -17,9 +17,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Username is required'],
     unique: true,
     trim: true,
-    minlength: [3, 'Username must be at least 3 characters'],
-    maxlength: [20, 'Username cannot exceed 20 characters'],
-    match: [/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores']
+    match: [/^[a-zA-Z0-9_.@-]+$/, "Username can only contain letters, numbers, underscores, dots, @, and hyphens"]
   },
   email: {
     type: String,
@@ -105,7 +103,6 @@ const userSchema = new mongoose.Schema({
   // helper flags for logic
   firstDepositDone: { type: Boolean, default: false },     // has this user made a first confirmed deposit?
   referralUnlocked: { type: Boolean, default: false },     // set true once walletBalance top-up >= 100 (one-time gate)
-
   // audit
   lastLevelUpdatedAt: { type: Date, default: null },
 }, { timestamps: true });

@@ -12,18 +12,27 @@ export const requestWithdraw = async (req, res) => {
     if (!ok) return res.status(400).json({ message: "Security password incorrect" });
 
     if (amount <= 0 || amount > user.walletBalance) return res.status(400).json({ message: "Invalid amount" });
-
+    const feePercent = 0.05;
+    const fee = amount * feePercent;
+    const totalDeduction = amount + fee;   // user pays this much
+    
+    if (totalDeduction > user.walletBalance) {
+      return res.status(400).json({ message: "Insufficient balance including withdrawal fee" });
+    }
+    
     // hold funds
-    user.walletBalance -= amount;
+    user.walletBalance -= totalDeduction;   // ✅ deduct full amount including fee
     await user.save();
-
+    
     const w = await Withdrawal.create({
       user: user._id,
       amount,
+      fee,                   // store fee separately
+      totalDeduction,        // useful for admin view
       toAddress: user.cryptoAddress,
-      walletType: user.walletType,   // <-- add this
-
+      walletType: user.walletType,
     });
+    
 
     res.status(201).json({ success:true, withdrawal: w });
   } catch (e) {
@@ -53,19 +62,39 @@ export const adminApproveWithdrawal = async (req, res) => {
   await w.save();
   res.json({ success:true, message:"Withdrawal approved" });
 };
+export const adminHoldWithdrawal = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const w = await Withdrawal.findById(id);
+    if (!w) return res.status(404).json({ message: "Withdrawal not found" });
+    if (w.status === "APPROVED" || w.status === "REJECTED")
+      return res.status(400).json({ message: "Cannot hold processed withdrawal" });
+
+    w.status = "HOLD";
+    await w.save();
+    res.json({ success: true, message: "Withdrawal put on hold" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Failed to hold withdrawal" });
+  }
+};
 
 export const adminRejectWithdrawal = async (req, res) => {
-  const { id } = req.params;
-  const w = await Withdrawal.findById(id);
-  if (!w) return res.status(404).json({ message: "Withdrawal not found" });
-  if (w.status !== "PENDING") return res.status(400).json({ message: "Already processed" });
+  try {
+    const { id } = req.params;
+    const w = await Withdrawal.findById(id);
+    if (!w) return res.status(404).json({ message: "Withdrawal not found" });
 
-  // refund held funds on reject
-  const user = await User.findById(w.user);
-  user.walletBalance += w.amount;
-  await user.save();
+    if (w.status === "APPROVED" || w.status === "REJECTED") {
+      return res.status(400).json({ message: "Cannot reject already processed withdrawal" });
+    }
 
-  w.status = "REJECTED";
-  await w.save();
-  res.json({ success:true, message:"Withdrawal rejected and funds returned" });
+    w.status = "REJECTED";
+    await w.save();
+
+    res.json({ success: true, message: "Withdrawal rejected" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Failed to reject withdrawal" });
+  }
 };

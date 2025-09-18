@@ -1,53 +1,42 @@
-// controllers/commission.controller.js
 import User from "../models/User.js";
-import Deposit from "../models/Deposit.js";
-import Stake from "../models/Stake.js";
 import CommissionLedger from "../models/CommissionLedger.js";
-import { getIndirectPct, MIN_STAKE_FOR_DAILY, LEADER_MIN_LEVEL, LEADER_BONUS_FLAT, REFERRAL_UNLOCK_ONE_TIME } from "./commission.rules.js";
+import Deposit from "../models/Deposit.js";
+import { getIndirectPct, LEADER_MIN_LEVEL, LEADER_BONUS_FLAT, REFERRAL_UNLOCK_ONE_TIME } from "./commission.rules.js";
 
-/** Walk upline up to 6 layers */
-async function getUplineChain(userId, maxLayers=6) {
-  const chain = [];
-  let current = await User.findById(userId).select("referredBy level walletBalance referralUnlocked");
-  let steps = 0;
-  while (current?.referredBy && steps < maxLayers) {
-    const up = await User.findById(current.referredBy).select("referredBy level walletBalance referralUnlocked");
-    if (!up) break;
-    chain.push(up);
-    current = up;
-    steps++;
-  }
-  return chain; // from layer 1 upwards
+// helper: total deposit ≥ $100
+async function hasDeposit100(userId) {
+  const agg = await Deposit.aggregate([
+    { $match: { user: userId, status: "APPROVED" } },
+    { $group: { _id: "$user", total: { $sum: "$amount" } } }
+  ]);
+  return (agg?.[0]?.total || 0) >= 100;
 }
 
-/** Check referral unlock gate (one-time $100 top-up in wallet) */
 function isReferralUnlocked(uplineUser) {
-  return !!uplineUser.referralUnlocked || (uplineUser.walletBalance >= REFERRAL_UNLOCK_ONE_TIME);
+  return uplineUser.totalUSDT >= REFERRAL_UNLOCK_ONE_TIME;
 }
 
-/** Mark unlock flag once they have ≥$100 */
-async function ensureReferralUnlockFlag(uplineUser) {
-  if (!uplineUser.referralUnlocked && uplineUser.walletBalance >= REFERRAL_UNLOCK_ONE_TIME) {
-    uplineUser.referralUnlocked = true;
-    await uplineUser.save();
-  }
-}
-
-/** Award INDIRECT commissions and Leader Bonuses on FIRST confirmed deposit only */
 export async function onFirstDepositConfirmed(newDepositorId, depositId, depositAmount, newDepositorLevel) {
-  const upline = await getUplineChain(newDepositorId, 10); // we’ll only pay up to 6, but can search deeper for leaders
-  // INDIRECT: pay only to first 6 layers, % depends on earner's level band; only if earner.level > downline.level; and only on FIRST deposit
-  for (let i = 0; i < Math.min(6, upline.length); i++) {
-    const earner = await User.findById(upline[i]._id);
-    // Gate: referral unlocked
-    await ensureReferralUnlockFlag(earner);
-    if (!isReferralUnlocked(earner)) continue;
+  if (depositAmount < 100) return; // ❌ rule: downline must deposit ≥100
 
-    // Rule: earn only if your level is higher than downline’s level
+  const uplineChain = [];
+  let current = await User.findById(newDepositorId).select("referredBy level totalUSDT");
+  while (current?.referredBy && uplineChain.length < 10) {
+    const up = await User.findById(current.referredBy).select("referredBy level totalUSDT");
+    if (!up) break;
+    uplineChain.push(up);
+    current = up;
+  }
+
+  // INDIRECT
+  for (let i = 0; i < Math.min(6, uplineChain.length); i++) {
+    const earner = await User.findById(uplineChain[i]._id);
+    if (!earner) continue;
+
+    if (!isReferralUnlocked(earner)) continue;
     if ((earner.level ?? 0) <= (newDepositorLevel ?? 0)) continue;
 
-    const layer = i + 1;
-    const pct = getIndirectPct(earner.level ?? 0, layer);
+    const pct = getIndirectPct(earner.level ?? 0, i+1);
     if (pct <= 0) continue;
 
     const amount = +(depositAmount * (pct/100)).toFixed(2);
@@ -57,9 +46,9 @@ export async function onFirstDepositConfirmed(newDepositorId, depositId, deposit
       user: earner._id,
       sourceUser: newDepositorId,
       deposit: depositId,
-      type: layer <=3 ? "INDIRECT_L1_3" : "INDIRECT_L4_6",
-      layer, percentage: pct, amount,
-      note: `Indirect commission L${layer} on first deposit`
+      type: i+1 <= 3 ? "INDIRECT_L1_3" : "INDIRECT_L4_6",
+      layer: i+1, percentage: pct, amount,
+      note: `Indirect commission L${i+1} on first deposit`
     });
 
     earner.walletBalance += amount;
@@ -67,14 +56,9 @@ export async function onFirstDepositConfirmed(newDepositorId, depositId, deposit
     await earner.save();
   }
 
-  // LEADER BONUS: every leader (Level ≥ 1) anywhere in the upline chain receives $0.05 flat
-  for (let i = 0; i < upline.length; i++) {
-    const leader = await User.findById(upline[i]._id);
-    if ((leader.level ?? 0) >= LEADER_MIN_LEVEL) {
-      // also require referral unlocked
-      await ensureReferralUnlockFlag(leader);
-      if (!isReferralUnlocked(leader)) continue;
-
+  // LEADER BONUS
+  for (const leader of uplineChain) {
+    if ((leader.level ?? 0) >= LEADER_MIN_LEVEL && isReferralUnlocked(leader)) {
       await CommissionLedger.create({
         user: leader._id,
         sourceUser: newDepositorId,
@@ -89,5 +73,3 @@ export async function onFirstDepositConfirmed(newDepositorId, depositId, deposit
     }
   }
 }
-
-

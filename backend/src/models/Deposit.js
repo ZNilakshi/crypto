@@ -7,7 +7,7 @@ const depositSchema = new mongoose.Schema({
   txHash: { type: String, required: true, unique: true, trim: true },
   network: { type: String, enum: ["TRC20", "BEP20"], required: true },
   systemWallet: { type: String, required: true }, // backend-assigned wallet
-  status: { type: String, enum: ["PENDING", "APPROVED", "REJECTED"], default: "PENDING" },
+  status: { type: String, enum: ["PENDING", "APPROVED", "REJECTED", "HOLD"], default: "PENDING" },
   isFirstDepositForUser: { type: Boolean, default: false },
 }, { timestamps: true });
 
