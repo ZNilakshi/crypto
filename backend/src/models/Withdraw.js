@@ -14,6 +14,8 @@ const withdrawalSchema = new mongoose.Schema({
     required: true
   },
   status: { type: String, enum: ["PENDING","APPROVED","REJECTED" ,"HOLD"], default: "PENDING" },
+  reason: { type: String, default: "" }, 
+
 }, { timestamps: true });
 
 export default mongoose.model("Withdrawal", withdrawalSchema);

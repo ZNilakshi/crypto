@@ -1,6 +1,8 @@
-import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
+import express from "express";
 import cors from "cors";
+
 import connectDB from "./src/db/db.js";
 import authRoutes from "./src/routes/auth.routes.js";
 import userRoutes from "./src/routes/user.routes.js"; // <-- expects export default
@@ -13,11 +15,13 @@ import walletRoutes from "./src/routes/wallet.route.js";
 import tradingRoutes from "./src/routes/trading.route.js";
 import adminRoutes from "./src/routes/admin.route.js"; // if you have admin routes
 import systemRoutes from "./src/routes/system.routes.js"; // system routes
-import "./src/jobs/autoUnstake.js"; // start the cron job
 
-dotenv.config();
 connectDB();
-
+console.log('✅ Environment check:', {
+    EMAIL_USER: process.env.EMAIL_USER,
+    EMAIL_PASS: process.env.EMAIL_PASS ? '***' : 'MISSING',
+    NODE_ENV: process.env.NODE_ENV
+  });
 const app = express();
 app.use(cors());
 app.use(express.json());

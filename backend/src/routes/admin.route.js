@@ -6,7 +6,8 @@ import {
   getAllDeposits,
   getAllWithdrawals,
   updateUserRole,
-  deleteUser
+  deleteUser,
+  getAllUserReferrals
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
@@ -20,5 +21,6 @@ router.get("/users", verifyFirebaseToken, listAllUsers);
 // Transactions
 router.get("/deposits", verifyFirebaseToken, getAllDeposits);
 router.get("/withdrawals", verifyFirebaseToken, getAllWithdrawals);
+router.get("/all-user-referrals", verifyFirebaseToken, getAllUserReferrals);
 
 export default router;

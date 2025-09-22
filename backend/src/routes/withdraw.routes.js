@@ -11,6 +11,6 @@ router.get("/", verifyFirebaseToken, listMyWithdrawals);
 router.get("/admin/all", verifyFirebaseToken, check_role(["crypto_admin"]), adminListWithdrawals);
 router.post("/admin/:id/approve", verifyFirebaseToken, check_role(["crypto_admin"]), adminApproveWithdrawal);
 router.post("/admin/:id/reject", verifyFirebaseToken, check_role(["crypto_admin"]), adminRejectWithdrawal);
-router.post('/admin/:id/hold', adminHoldWithdrawal);
+router.post("/admin/:id/hold", verifyFirebaseToken, check_role(["crypto_admin"]), adminHoldWithdrawal);
 
 export default router;

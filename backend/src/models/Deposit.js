@@ -9,6 +9,8 @@ const depositSchema = new mongoose.Schema({
   systemWallet: { type: String, required: true }, // backend-assigned wallet
   status: { type: String, enum: ["PENDING", "APPROVED", "REJECTED", "HOLD"], default: "PENDING" },
   isFirstDepositForUser: { type: Boolean, default: false },
+  reason: { type: String, trim: true }, 
+
 }, { timestamps: true });
 
 export default mongoose.model("Deposit", depositSchema);

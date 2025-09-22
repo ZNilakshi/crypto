@@ -3,6 +3,8 @@ import Deposit from "../models/Deposit.js";
 import User from "../models/User.js";
 import { onFirstDepositConfirmed } from "./commission.controller.js";
 import { updateUserLevel } from "./level.controller.js";
+import { sendDepositStatusEmail } from '../utils/emailService.js';
+
 
 const SYSTEM_WALLETS = {
   TRC20: "TAbnTnhXFXe3okDSLwwSosZq6sZ6hSAAAA",
@@ -113,10 +115,12 @@ export const adminDepositToUser = async (req, res) => {
 };
 
 
+
+
 export const adminApproveDeposit = async (req, res) => {
   try {
     const { id } = req.params;
-    const dep = await Deposit.findById(id);
+    const dep = await Deposit.findById(id).populate('user', 'username email');
     if (!dep) return res.status(404).json({ message: "Deposit not found" });
     
     // Allow approval if PENDING or HOLD
@@ -126,7 +130,7 @@ export const adminApproveDeposit = async (req, res) => {
     dep.status = "APPROVED";
     await dep.save();
 
-    const user = await User.findById(dep.user);
+    const user = await User.findById(dep.user._id);
     user.totalUSDT = (user.totalUSDT || 0) + dep.amount;
     if (!user.referralUnlocked && user.totalUSDT >= 100) {
       user.referralUnlocked = true;
@@ -146,6 +150,21 @@ export const adminApproveDeposit = async (req, res) => {
       await user.save();
     }
 
+    // Send approval email (don't await to avoid blocking response)
+    sendDepositStatusEmail(
+      dep.user.email, 
+      dep.user.username, 
+      'APPROVED', 
+      { 
+        amount: dep.amount, 
+        createdAt: dep.createdAt, 
+        txHash: dep.txHash, 
+        systemWallet: dep.systemWallet 
+      }
+    ).catch(error => {
+      console.error('Failed to send approval email:', error);
+    });
+
     res.json({ success:true, message:"Deposit approved" });
   } catch (e) {
     console.error(e);
@@ -154,29 +173,75 @@ export const adminApproveDeposit = async (req, res) => {
 };
 
 export const adminRejectDeposit = async (req, res) => {
-  const { id } = req.params;
-  const dep = await Deposit.findById(id);
-  if (!dep) return res.status(404).json({ message: "Deposit not found" });
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
 
-  // Allow rejection if PENDING or HOLD
-  if (!["PENDING", "HOLD"].includes(dep.status))
-    return res.status(400).json({ message: "Already processed" });
+    const dep = await Deposit.findById(id).populate('user', 'username email');
+    if (!dep) return res.status(404).json({ message: "Deposit not found" });
 
-  dep.status = "REJECTED";
-  await dep.save();
-  res.json({ success:true, message:"Deposit rejected" });
+    if (!["PENDING", "HOLD"].includes(dep.status))
+      return res.status(400).json({ message: "Already processed" });
+
+    dep.status = "REJECTED";
+    dep.reason = reason || "No reason provided";
+    await dep.save();
+
+    // Send rejection email (don't await to avoid blocking response)
+    sendDepositStatusEmail(
+      dep.user.email, 
+      dep.user.username, 
+      'REJECTED', 
+      { 
+        amount: dep.amount, 
+        createdAt: dep.createdAt, 
+        txHash: dep.txHash 
+      },
+      reason
+    ).catch(error => {
+      console.error('Failed to send rejection email:', error);
+    });
+
+    res.json({ success:true, message:"Deposit rejected" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success:false, message: "Rejection failed" });
+  }
 };
 
 export const adminHoldDeposit = async (req, res) => {
-  const { id } = req.params;
-  const dep = await Deposit.findById(id);
-  if (!dep) return res.status(404).json({ message: "Deposit not found" });
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
 
-  // Only allow putting PENDING deposits on hold
-  if (dep.status !== "PENDING")
-    return res.status(400).json({ message: "Cannot hold a processed deposit" });
+    const dep = await Deposit.findById(id).populate('user', 'username email');
+    if (!dep) return res.status(404).json({ message: "Deposit not found" });
 
-  dep.status = "HOLD";
-  await dep.save();
-  res.json({ success:true, message:"Deposit put on hold" });
+    if (dep.status !== "PENDING")
+      return res.status(400).json({ message: "Cannot hold a processed deposit" });
+
+    dep.status = "HOLD";
+    dep.reason = reason || "No reason provided";
+    await dep.save();
+
+    // Send hold email (don't await to avoid blocking response)
+    sendDepositStatusEmail(
+      dep.user.email, 
+      dep.user.username, 
+      'HOLD', 
+      { 
+        amount: dep.amount, 
+        createdAt: dep.createdAt, 
+        txHash: dep.txHash 
+      },
+      reason
+    ).catch(error => {
+      console.error('Failed to send hold email:', error);
+    });
+
+    res.json({ success:true, message:"Deposit put on hold" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ success:false, message: "Hold operation failed" });
+  }
 };

@@ -22,6 +22,7 @@
     "firebase-admin": "^13.4.0",
     "mongoose": "^8.18.0",
     "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.6",
     "pdfkit": "^0.17.2",
     "qrcode.react": "^4.2.0",
     "tronweb": "^6.0.4"

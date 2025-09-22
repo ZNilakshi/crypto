@@ -144,14 +144,23 @@ async function getReferralsRecursive(userId, layer = 1, maxLayers = 6) {
   if (layer > maxLayers) return [];
 
   const refs = await User.find({ referredBy: userId })
-    .select("username level totalStakes")
-    .lean();
-
+  .select("username level totalStakes createdAt directReferrals totalCommissionEarned referredBy walletBalance")
+    .populate({ path: "referredBy", select: "username" });
+    console.log("Referrals for layer", layer, refs.map(r => ({
+      user: r.username,
+      refBy: r.referredBy?.username
+    })));
+    
   let result = refs.map(r => ({
     username: r.username,
     level: r.level,
-    totalStakes: r.totalStakes,
-    layer
+    totalStakes: r.totalStakes || 0,
+    totalCommissionEarned: r.totalCommissionEarned || 0,
+    directReferrals: r.directReferrals?.length || 0,
+    joinDate: r.createdAt,
+    walletBalance: r.walletBalance || 0, 
+    layer,
+    referredByUsername: r.referredBy?.username || "—"
   }));
 
   for (const r of refs) {
@@ -161,6 +170,7 @@ async function getReferralsRecursive(userId, layer = 1, maxLayers = 6) {
 
   return result;
 }
+
 export const getDashboard = async (req, res) => {
   try {
     const user = await User.findById(req.userId).lean();
