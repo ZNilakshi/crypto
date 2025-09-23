@@ -41,6 +41,8 @@ const LightningEffect = memo(() => (
   </div>
 ));
 
+LightningEffect.displayName = "LightningEffect";
+
 // Memoized Fire Effect
 const FireEffect = memo(() => (
   <div className="absolute inset-0 pointer-events-none z-20">
@@ -72,6 +74,8 @@ const FireEffect = memo(() => (
     ))}
   </div>
 ));
+
+FireEffect.displayName = "FireEffect";
 
 // Memoized Particles Component
 const ParticlesBackground = memo(({ init }: { init: boolean }) => {
@@ -107,6 +111,8 @@ const ParticlesBackground = memo(({ init }: { init: boolean }) => {
     />
   );
 });
+
+ParticlesBackground.displayName = "ParticlesBackground";
 
 export default function RegisterPage() {
   const searchParams = useSearchParams();

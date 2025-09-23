@@ -162,7 +162,7 @@ export default function AdminDashboard() {
 
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-6 pt-24 pb-20">
+      <main className="flex-1 overflow-y-auto  pt-24 pb-20">
         {renderContent()}
       </main>
 

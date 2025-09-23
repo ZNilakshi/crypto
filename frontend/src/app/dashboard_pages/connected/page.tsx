@@ -34,12 +34,9 @@ export default function UserFriends() {
   }, []);
 
   return (
-    <div className="min-h-screen rounded-3xl text-black bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 p-4 relative overflow-hidden">
-    {/* Background Pattern */}
-    <div className="absolute inset-0 opacity-10">
-      <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2Utb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyMCIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEwIi8+PC9nPjwvc3ZnPg==')]"></div>
-    </div>
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen rounded-3xl text-black bg-emerald-900 p-4 relative overflow-hidden">
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10">
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-extrabold bg-green-400 bg-clip-text text-transparent">
