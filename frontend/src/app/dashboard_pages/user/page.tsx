@@ -413,7 +413,7 @@ export default function ProfilePage() {
       </AnimatePresence>
 
       {/* Main Background with Gradient and Pattern */}
-      <div className="min-h-screen text-black rounded-3xl bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 p-4 relative overflow-hidden">
+      <div className="min-h-screen text-black rounded-3xl bg-gradient-to-br from-emerald-800 via-teal-700 to-cyan-800">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2Utb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyMCIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEwIi8+PC9nPjwvc3ZnPg==')]"></div>
