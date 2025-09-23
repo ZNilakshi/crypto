@@ -43,11 +43,11 @@ export default function FAQPopup({ onClose }: FAQPopupProps) {
         {/* FAQ List */}
         <div className="max-h-80 overflow-y-auto pr-2 space-y-4">
           <div>
-            <p className="font-semibold text-green-200">👉 What services do you offer?</p>
+            <p className="font-semibold text-green-200"> What services do you offer?</p>
             <p className="text-green-100/90">We offer web design, development, mobile app creation, and digital marketing solutions.</p>
           </div>
           <div>
-            <p className="font-semibold text-green-200">👉 How long does a typical project take?</p>
+            <p className="font-semibold text-green-200">How long does a typical project take?</p>
             <p className="text-green-100/90">Project timelines vary depending on complexity, but most of our websites are completed within 2-6 weeks.</p>
           </div>
           <div>
