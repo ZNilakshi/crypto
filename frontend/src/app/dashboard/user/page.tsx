@@ -100,36 +100,7 @@ export default function AdminDashboard() {
   return (
     <div className="font-sans text-white min-h-screen relative overflow-hidden bg-gradient-to-br from-green-650 via-emerald-900 to-lime-900">
       {/* Background Particles */}
-      {init && (
-        <Particles
-          id="tsparticles"
-          className="absolute top-0 left-0 w-full h-full -z-10"
-          options={{
-            background: { color: { value: "transparent" } },
-            fpsLimit: 60,
-            interactivity: {
-              events: { onHover: { enable: true, mode: "repulse" } },
-              modes: { repulse: { distance: 120 } },
-            },
-            particles: {
-              color: { value: "rgb(134, 239, 172)" }, // light green
-              links: {
-                color: "rgb(134, 239, 172)",
-                distance: 150,
-                enable: true,
-                opacity: 0.4,
-                width: 1,
-              },
-              move: { enable: true, speed: 2 },
-              number: { value: 600, density: { enable: true } },
-              opacity: { value: 0.5 },
-              shape: { type: "circle" },
-              size: { value: { min: 1, max: 3 } },
-            },
-            detectRetina: true,
-          }}
-        />
-      )}
+     
 
       {/* Navbar */}
      {/* Navbar */}
