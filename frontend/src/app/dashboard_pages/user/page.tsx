@@ -66,7 +66,7 @@ export default function ProfilePage() {
   const [progressPercent, setProgressPercent] = useState(0);
   const [showLoading, setShowLoading] = useState(false);
   
-  // Alert states
+
   const [alert, setAlert] = useState<{
     show: boolean;
     message: string;
