@@ -144,6 +144,7 @@ userSchema.methods.verifySecurityPassword = async function(password) {
 userSchema.pre('save', async function(next) {
   if (this.isModified('securityPassword') && this.securityPassword) {
     this.securityPassword = await bcrypt.hash(this.securityPassword, 12);
+    this.securityPasswordSet = true; // Mark as set
   }
   next();
 });

@@ -63,26 +63,32 @@ export const changeSecurityPassword = async (req, res) => {
       return res.status(404).json({ message: "❌ User not found" });
     }
 
-    // If security password exists, verify it
-    if (user.securityPassword) {
+    // If security password is already set, verify the current one
+    if (user.securityPasswordSet && user.securityPassword) {
+      if (!currentSecurityPassword) {
+        return res.status(400).json({ message: "❌ Current security password is required" });
+      }
+      
       const isMatch = await bcrypt.compare(currentSecurityPassword, user.securityPassword);
       if (!isMatch) {
         return res.status(400).json({ message: "❌ Current security password is incorrect" });
       }
-    } else {
-      // If no security password is set, use the login password as fallback
-      // You might want to verify against Firebase Auth here
-      // This is a simplified approach
-      const firebaseUser = await admin.auth().getUser(req.firebaseUid);
-      // Note: This doesn't actually verify the password - you'd need a different approach
-      // For a production system, consider implementing a proper reauthentication flow
+    }
+    // If no security password is set (first time setup), no need to verify current password
+
+    // Validate new password
+    if (!newSecurityPassword || newSecurityPassword.length < 6) {
+      return res.status(400).json({ message: "❌ New security password must be at least 6 characters long" });
     }
 
-    // Set new security password directly (pre-save hook will hash it)
+    // Set new security password
     user.securityPassword = newSecurityPassword;
     await user.save();
 
-    res.json({ message: "✅ Security password updated successfully" });
+    res.json({ 
+      message: user.securityPasswordSet ? "✅ Security password updated successfully" : "✅ Security password set successfully",
+      securityPasswordSet: true 
+    });
   } catch (err) {
     console.error("Error updating security password:", err);
     res.status(500).json({ message: "❌ Failed to update security password" });
