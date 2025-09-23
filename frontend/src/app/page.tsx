@@ -189,7 +189,7 @@ export default function HomePage() {
             {!user ? (
               <Link
                 href="/auth/login"
-                className="mt-4 px-8 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-full shadow-lg hover:scale-105 transition"
+                className="mt-4 px-8 py-3 bg-gradient-to-r from-green-400 to-green-600 text-white font-bold rounded-full shadow-lg hover:scale-105 transition"
                 onClick={() => setMenuOpen(false)}
               >
                 Login
@@ -198,7 +198,7 @@ export default function HomePage() {
               <div className="flex flex-col items-center space-y-2 mt-4">
                 <Link
                   href={dashboardPath}
-                  className="px-8 py-3 bg-green-700 text-white font-bold rounded-full shadow-lg hover:bg-green-600 transition"
+                  className="px-8 py-3 bg-green-600 text-white font-bold rounded-full shadow-lg hover:bg-green-600 transition"
                   onClick={() => setMenuOpen(false)}
                 >
                   My Dashboard
