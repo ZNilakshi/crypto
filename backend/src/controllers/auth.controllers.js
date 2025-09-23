@@ -22,13 +22,19 @@ export const getEmailFromUsername = async (req, res) => {
     try {
       const { fullName, username, email, phoneNumber, referralCode, firebaseUid } = req.body;
   
+      // Check if user already exists with this Firebase UID
+      const existingUser = await User.findOne({ firebaseUid });
+      if (existingUser) {
+        return res.status(400).json({ message: "❌ User already exists with this account" });
+      }
+  
       // Check username availability
-      const usernameTaken = await User.findOne({ username: username});
+      const usernameTaken = await User.findOne({ username: username.toLowerCase() });
       if (usernameTaken) {
         return res.status(400).json({ message: "❌ Username already taken" });
       }
   
-      // Find referrer by referral code
+      // Find referrer by referral code (optional for Google signups)
       let referrer = null;
       if (referralCode && referralCode.trim() !== "") {
         referrer = await User.findOne({ referralCode: referralCode.trim() });
@@ -41,26 +47,25 @@ export const getEmailFromUsername = async (req, res) => {
       const newUser = new User({
         firebaseUid,
         fullName: fullName.trim(),
-        username: username.trim(),
+        username: username.trim().toLowerCase(),
         email: email.toLowerCase().trim(),
         phoneNumber: phoneNumber ? phoneNumber.trim() : "",
         referredBy: referrer ? referrer._id : null,
-        level: 0, 
+        level: 0,
+        emailVerified: true, // Google users have verified emails
         walletBalance: 0,
-      stakingBalance: 0,
-      commissionBalance: 0
-      
+        stakingBalance: 0,
+        commissionBalance: 0
       });
   
       await newUser.save();
   
-      // Update referrer's direct referrals and commission hierarchy
+      // Update referrer's direct referrals
       if (referrer) {
         referrer.directReferrals.push(newUser._id);
         await referrer.save();
-        
-           }
- 
+      }
+  
       res.status(201).json({ 
         message: "✅ User registered successfully", 
         user: {
@@ -125,6 +130,7 @@ export const checkUsername = async (req, res) => {
 };
 
 // Get user role by Firebase UID
+// Get user role by Firebase UID - Improved error handling
 export const getRoleByUid = async (req, res) => {
   try {
     const { uid } = req.body;
@@ -132,11 +138,17 @@ export const getRoleByUid = async (req, res) => {
     if (!uid) return res.status(400).json({ message: "❌ UID is required" });
 
     const user = await User.findOne({ firebaseUid: uid });
-    if (!user) return res.status(404).json({ message: "❌ User not found" });
+    if (!user) return res.status(404).json({ 
+      message: "❌ User not found in database",
+      code: "USER_NOT_FOUND" 
+    });
 
-    res.json({ role: user.role });
+    res.json({ 
+      role: user.role,
+      username: user.username 
+    });
   } catch (err) {
-    console.error(err);
+    console.error("❌ Get role error:", err);
     res.status(500).json({ message: "❌ Server Error" });
   }
 };
