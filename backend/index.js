@@ -23,7 +23,10 @@ console.log('✅ Environment check:', {
     NODE_ENV: process.env.NODE_ENV
   });
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ["https://fortunepathweb.com", "https://www.fortunepathweb.com"],
+  credentials: true,
+}));
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
