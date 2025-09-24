@@ -15,6 +15,7 @@ import walletRoutes from "./src/routes/wallet.route.js";
 import tradingRoutes from "./src/routes/trading.route.js";
 import adminRoutes from "./src/routes/admin.route.js"; // if you have admin routes
 import systemRoutes from "./src/routes/system.routes.js"; // system routes
+import statsRoutes from "./src/routes/stats.routes.js";
 
 connectDB();
 console.log('✅ Environment check:', {
@@ -24,8 +25,8 @@ console.log('✅ Environment check:', {
   });
 const app = express();
 app.use(cors({
-  origin: ["https://fortunepathweb.com", "https://www.fortunepathweb.com"],
-  credentials: true,
+  origin: "http://localhost:3000", // allow your frontend
+  credentials: true                // if you use cookies/auth headers
 }));
 app.use(express.json());
 
@@ -39,6 +40,8 @@ app.use('/api/dashboard', dashboardRoutes)
 app.use("/api/admin/deposits", adminDepositRoutes);
 app.use("/api/trading", tradingRoutes);
 app.use("/api/admin", adminRoutes);    
-app.use("/api/system", systemRoutes); // system routes
+app.use("/api/system", systemRoutes); 
+app.use("/api/stats", statsRoutes);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

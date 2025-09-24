@@ -69,7 +69,7 @@ export default function AboutContent() {
           animate={{ opacity: isVisible ? 1 : 0 }}
           transition={{ duration: 1 }}
         >
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-cyan-300 text-glow">
+          <h1 className="text-5xl mt-4 md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-cyan-300 text-glow">
             About FortunePath
           </h1>
           <p className="text-xl text-green-100 max-w-3xl mx-auto">

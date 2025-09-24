@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import {
   TrendingDown,
-  Building2,
+  Building2, 
   Users,
   Sparkles,
   LineChart,
@@ -27,6 +27,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
+import { FiTrendingUp, FiCpu, FiDownload, FiUpload } from "react-icons/fi";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL!;
@@ -169,8 +170,9 @@ export default function ProfilePage() {
   if (!user) return null;
 
   return (
-    <div className="min-h-screen rounded-3xl bg-gradient-to-b from-gray-950 via-black to-gray-900 text-white">
-      {/* Hero Section */}
+    
+    <div className="min-h-screen rounded-3xl text-black bg-emerald-900 p-4 relative overflow-hidden">
+{/* Hero Section */}
       <div
         className="relative rounded-3xl h-[40vh] w-full bg-cover bg-center overflow-hidden rounded-b-3xl"
         style={{
@@ -224,7 +226,7 @@ export default function ProfilePage() {
           </button>
         </div>
       </div>
-
+    
       {/* Content */}
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
         {/* Deposit Ticker - Mobile Optimized */}
@@ -246,7 +248,7 @@ export default function ProfilePage() {
               >
                 <div className="w-2 h-2 bg-emerald-400 rounded-full animate-ping"></div>
                 <DollarSign size={14} color={iconColors.success} />
-                <span className="text-xs">
+                <span className="text-xs text-white/80">
                   {d.name} deposited{" "}
                   <span className="font-semibold text-emerald-300">
                     {d.amount} {d.currency}
@@ -256,8 +258,34 @@ export default function ProfilePage() {
             ))}
           </motion.div>
         </motion.div>
+  {/* Quick Actions */}
+  <motion.div
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+        >
+          {[
+            { icon: FiTrendingUp, label: "Stake", color: "from-emerald-500 to-green-500" },
+            { icon: FiCpu, label: "AI Trade", color: "from-blue-500 to-cyan-500" },
+            { icon: FiDownload, label: "Deposit", color: "from-purple-500 to-indigo-500" },
+            { icon: FiUpload, label: "Withdraw", color: "from-orange-500 to-red-500" },
+          ].map((action, index) => (
+            <motion.button
+              key={action.label}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className={`bg-gradient-to-br ${action.color} rounded-2xl p-4 text-white shadow-lg hover:shadow-xl transition-all duration-300`}
+            >
+              <div className="flex flex-col items-center space-y-2">
+                <action.icon size={24} />
+                <span className="text-sm font-medium">{action.label}</span>
+              </div>
+            </motion.button>
+          ))}
+        </motion.div>
 
-        {/* ✅ Real-time Market Data - Mobile Optimized */}
+
       {/* ✅ Real-time Market - Cleaner List Style */}
 <motion.div
   className="bg-gray-900/60 rounded-2xl p-4 shadow-lg border border-white/10 backdrop-blur-md"
@@ -268,7 +296,7 @@ export default function ProfilePage() {
   <div className="flex items-center justify-between mb-4">
     <div className="flex items-center gap-2">
       <LineChart size={20} color={iconColors.primary} />
-      <h2 className="text-lg font-bold">Live Market</h2>
+      <h2 className="text-lg text-white/80 font-bold">Live Market</h2>
     </div>
     <span className="text-xs text-white/50">Updated in real-time</span>
   </div>
@@ -312,7 +340,7 @@ const coinLogos: Record<string, string> = {
   </div>
 
   <div>
-    <p className="font-semibold text-xs uppercase tracking-wide">
+    <p className="font-semibold text-white/80 text-xs uppercase tracking-wide">
       {coin.symbol.replace("usdt", "/USDT")}
     </p>
     <p className="text-xs text-white/50">
@@ -324,7 +352,7 @@ const coinLogos: Record<string, string> = {
 
           {/* Middle: Price */}
           <div className="text-right">
-            <p className="text-base text-xs font-bold">
+            <p className="text-base text-xs text-white/80 font-bold">
               ${coin.price.toLocaleString("en-US", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,

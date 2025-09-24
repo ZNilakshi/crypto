@@ -23,19 +23,8 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 import axios from "axios";
 import type { User } from "firebase/auth";
 import { motion } from "framer-motion";
-import CountUp from "react-countup"; // ⬆️ add at the top
 
-const slides = [
-  {
-    image: "/img1.jpg",
-    title: "Welcome to ModernSite",
-    subtitle:
-      "Experience the future of web design with our cutting-edge platform",
-    button: { text: "Get Started", href: "/get-started" },
-  },
-  { image: "/img2.avif", title: "Innovation", subtitle: "Leading the way in modern technology" },
-  { image: "/img3.jpg", title: "Success", subtitle: "Your growth is our mission" },
-];
+
 
 export default function HomePage() {
   const [current, setCurrent] = useState(0);
@@ -43,10 +32,11 @@ export default function HomePage() {
   const [faqOpen, setFaqOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
-  const [activePage, setActivePage] = useState<"home" | "about" | "services" | "contact">("home");
+  const [activePage, setActivePage] = useState<"Gateway" | "Our Vision" | "Wealth Programs" | "Connect">("Gateway");
   const [role, setRole] = useState<string | null>(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
+  const [activeUsers, setActiveUsers] = useState<number | null>(null);
 
   // 🔄 Track user login + fetch role
   useEffect(() => {
@@ -69,13 +59,7 @@ export default function HomePage() {
     return () => unsubscribe();
   }, []);
 
-  // Hero Slider auto-change
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % slides.length);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -83,6 +67,17 @@ export default function HomePage() {
     setRole(null);
   };
 
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/stats/active-users`);
+        setActiveUsers(res.data.displayUsers); // show boosted count
+      } catch (err) {
+        console.error("Error fetching active users:", err);
+      }
+    };
+    fetchUsers();
+  }, []);
   // ✅ Decide dashboard path based on role
   const dashboardPath =
     role === "crypto_admin" ? "/dashboard/crypto" : "/dashboard/user";
@@ -93,16 +88,16 @@ export default function HomePage() {
       <nav className="fixed top-0 left-0 w-full bg-green-950/70 backdrop-blur-md text-white z-50 shadow-lg border-b border-green-800/40">
         <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
           <h1 className="text-2xl font-extrabold text-transparent bg-gradient-to-r from-green-400 via-teal-300 to-emerald-400 bg-clip-text drop-shadow-lg">
-            Fortune Path Web
+          FortunePathWeb.com
           </h1>
 
           {/* Desktop Links */}
           <div className="hidden md:flex items-center space-x-8">
             {[
-              { label: "Home", page: "home" as const },
-              { label: "About", page: "about" as const },
-              { label: "Services", page: "services" as const },
-              { label: "Contact", page: "contact" as const },
+              { label: "Gateway", page: "Gateway" as const },
+              { label: "Our Vision", page: "Our Vision" as const },
+              { label: "Wealth Programs ", page: "Wealth Programs" as const },
+              { label: "Connect", page: "Connect" as const },
             ].map((link) => (
               <button
                 key={link.page}
@@ -173,7 +168,7 @@ export default function HomePage() {
         {/* Mobile Menu */}
         {menuOpen && (
           <div className="md:hidden fixed w-full h-screen bg-green-950/95 backdrop-blur-md flex flex-col items-center justify-center space-y-6 z-50">
-            {(["home", "about", "services", "contact"] as const).map((page) => (
+            {(["Gateway", "Our Vision", "Wealth Programs", "Connect"] as const).map((page) => (
               <button
                 key={page}
                 onClick={() => {
@@ -220,7 +215,7 @@ export default function HomePage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col">
-        {activePage === "home" && (
+        {activePage === "Gateway" && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -233,16 +228,19 @@ export default function HomePage() {
 
             {/* Hero Content */}
             <div className="relative z-10 text-center max-w-4xl px-6 space-y-6 mt-20">
-              <motion.h1
+             
+            <span className="text-teal-300 text-4xl md:text-6xl font-semibold">FortunePathWeb.com </span>
+            <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7 }}
-                className="text-5xl md:text-6xl font-extrabold tracking-tight 
+                className="text-xl md:text-xl font-extrabold tracking-tight 
                 bg-gradient-to-r from-green-400 via-teal-300 to-emerald-400 
                 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(16,185,129,0.7)]"
               >
-                Secure Crypto Investments
-              </motion.h1>
+                {
+                " "}
+- Where AI & Blockchain Create Tomorrow’s Millionaires            </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -250,10 +248,10 @@ export default function HomePage() {
                 transition={{ delay: 0.2, duration: 0.7 }}
                 className="text-lg md:text-xl text-emerald-100 drop-shadow-[0_0_10px_rgba(20,184,166,0.6)]"
               >
-                Trade smarter, grow faster. Join{" "}
-                <span className="text-teal-300 font-semibold">ModernSite</span>{" "}
-                for secure, fast, and reliable crypto investments.
-              </motion.p>
+                 {" "}
+                Step into the future of wealth creation, powered by Quantum AI Trading and next-gen crypto staking.
+                We don’t just secure your crypto — we accelerate it into the world of limitless opportunity.             
+                </motion.p>
 
               {/* Call-to-Action Buttons */}
               <motion.div
@@ -266,27 +264,30 @@ export default function HomePage() {
                   href="/auth/register"
                   className="flex items-center gap-2 px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.8)] text-white font-semibold hover:scale-110 hover:shadow-[0_0_35px_rgba(45,212,191,0.9)] transition"
                 >
-                  <FiArrowRight className="text-xl" />
                   Get Started
                 </Link>
                 <Link
                   href={dashboardPath}
                   className="flex items-center gap-2 px-8 py-3 border border-emerald-400 rounded-full text-emerald-200 font-semibold bg-black/20 hover:bg-emerald-800/40 transition hover:shadow-[0_0_25px_rgba(20,184,166,0.7)]"
                 >
-                  <FiBarChart2 className="text-xl" />
-                  Dashboard
+                  Your Profile
                 </Link>
               </motion.div>
             </div>
 
             {/* Stats Grid */}
             <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-6 mt-10 mb-26 max-w-5xl px-6">
-              {[
-                { icon: Users, label: "Active Users", value: "50K+" },
-                { icon: DollarSign, label: "Transactions", value: "120M+" },
-                { icon: Wallet, label: "Invested", value: "$250M+" },
-                { icon: Clock, label: "Uptime", value: "99.9%" },
-              ].map((stat, i) => (
+            {[
+  { 
+    icon: Users, 
+    label: "Visionaries", 
+    value: activeUsers !== null ? activeUsers.toLocaleString() : "340+" 
+  },
+  { icon: DollarSign, label: "AI-Driven Trades", value: "120M+" },
+  { icon: Wallet, label: "Wealth Empowered", value: "$250M+" },
+  { icon: Clock, label: "Hyper Reliability ", value: "99.9%" },
+]
+.map((stat, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 20 }}
@@ -306,9 +307,9 @@ export default function HomePage() {
           </motion.div>
         )}
 
-        {activePage === "about" && <AboutContent />}
-        {activePage === "services" && <ServiceContent />}
-        {activePage === "contact" && <ContactContent />}
+        {activePage === "Our Vision" && <AboutContent />}
+        {activePage === "Wealth Programs" && <ServiceContent />}
+        {activePage === "Connect" && <ContactContent />}
       </main>
 
       
@@ -317,7 +318,7 @@ export default function HomePage() {
        
         <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-2 text-sm">
           <p className="text-xs">
-          © 2025 Fortune Path Web — All rights reserved.</p>
+          ©️ 2025 FortunePathWeb.com — Pioneering the Future of Intelligent Wealth..</p>
           <div className="flex space-x-6">
             <button onClick={() => setHelpOpen(true)} className="flex items-center space-x-1 hover:text-yellow-400">
               <HelpCircle className="w-4 h-4" />
