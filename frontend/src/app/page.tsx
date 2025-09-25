@@ -24,8 +24,6 @@ import axios from "axios";
 import type { User } from "firebase/auth";
 import { motion } from "framer-motion";
 
-
-
 export default function HomePage() {
   const [current, setCurrent] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -59,8 +57,6 @@ export default function HomePage() {
     return () => unsubscribe();
   }, []);
 
-  
-
   const handleLogout = async () => {
     await signOut(auth);
     setUser(null);
@@ -87,7 +83,7 @@ export default function HomePage() {
       {/* Navbar */}
       <nav className="fixed top-0 left-0 w-full bg-green-950/70 backdrop-blur-md text-white z-50 shadow-lg border-b border-green-800/40">
         <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
-          <h1 className="text-2xl font-extrabold text-transparent bg-gradient-to-r from-green-400 via-teal-300 to-emerald-400 bg-clip-text drop-shadow-lg">
+          <h1 className="text-sm font-extrabold text-transparent bg-gradient-to-r from-green-400 via-teal-300 to-emerald-400 bg-clip-text drop-shadow-lg">
           FortunePathWeb.com
           </h1>
 
@@ -193,7 +189,7 @@ export default function HomePage() {
               <div className="flex flex-col items-center space-y-2 mt-4">
                 <Link
                   href={dashboardPath}
-                  className="px-8 py-3 bg-green-600 text-white font-bold rounded-full shadow-lg hover:bg-green-600 transition"
+                  className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold rounded-full shadow-lg hover:bg-green-600 transition"
                   onClick={() => setMenuOpen(false)}
                 >
                   My Dashboard
@@ -234,13 +230,13 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7 }}
-                className="text-xl md:text-xl font-extrabold tracking-tight 
+                className="text-sm md:text-xl font-extrabold tracking-tight 
                 bg-gradient-to-r from-green-400 via-teal-300 to-emerald-400 
                 bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(16,185,129,0.7)]"
               >
                 {
                 " "}
-- Where AI & Blockchain Create Tomorrow’s Millionaires            </motion.h1>
+Where AI & Blockchain Create Tomorrow’s Millionaires            </motion.h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 20 }}

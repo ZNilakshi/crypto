@@ -25,39 +25,10 @@ export default function AboutContent() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-900 to-green-900">
-      
-      {/* Animated Background Blobs */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20">
-        {[...Array(5)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute rounded-full bg-green-500 opacity-10"
-            style={{
-              width: Math.random() * 300 + 100 + "px",
-              height: Math.random() * 300 + 100 + "px",
-              top: Math.random() * 100 + "%",
-              left: Math.random() * 100 + "%",
-            }}
-            animate={{
-              x: [0, 30, -20, 0],
-              y: [0, -50, 20, 0],
-              scale: [1, 1.1, 0.9, 1],
-            }}
-            transition={{
-              duration: Math.random() * 20 + 15,
-              repeat: Infinity,
-              repeatType: "mirror",
-              delay: Math.random() * 5,
-            }}
-          ></motion.div>
-        ))}
-      </div>
-
-      {/* Geometric Shapes */}
-      <div className="absolute top-20 -left-20 w-72 h-72 bg-green-600 rounded-full mix-blend-screen opacity-10 animate-pulse"></div>
-      <div className="absolute bottom-10 -right-10 w-64 h-64 bg-blue-500 rounded-full mix-blend-screen opacity-10 animate-pulse"></div>
-      <div className="absolute top-1/2 left-1/4 transform -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-purple-500 rounded-lg rotate-45 opacity-10"></div>
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-green-950">
+    {/* Background accents */}
+    <div className="absolute top-20 left-1/2 -translate-x-1/2 w-72 h-72 bg-green-600/20 rounded-full blur-3xl"></div>
+    <div className="absolute bottom-10 right-1/2 translate-x-1/2 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl"></div>
 
       {/* Main Content */}
       <div className="relative z-10 container mx-auto px-4 py-16">
@@ -69,7 +40,7 @@ export default function AboutContent() {
           animate={{ opacity: isVisible ? 1 : 0 }}
           transition={{ duration: 1 }}
         >
-          <h1 className="text-5xl mt-4 md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-cyan-300 text-glow">
+          <h1 className="text-4xl mt-4 md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-cyan-300 text-glow">
             About FortunePath
           </h1>
           <p className="text-xl text-green-100 max-w-3xl mx-auto">

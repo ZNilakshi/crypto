@@ -320,7 +320,8 @@ export default function RegisterPage() {
           className="relative bg-[#0f3d24]/90 p-8 rounded-3xl w-full max-w-lg shadow-[0_0_25px_#39ff14] border border-green-500 backdrop-blur-lg"
         >
           <h1 className="text-3xl font-extrabold text-center text-green-400 drop-shadow-[0_0_20px_#00ff99] mb-2">
-            LEDERBLOCK
+          Fortunepath.com
+
           </h1>
           <p className="text-center text-gray-300 mb-8 text-sm sm:text-base">
             Unlock the Future of AI in the Jungle of Innovation

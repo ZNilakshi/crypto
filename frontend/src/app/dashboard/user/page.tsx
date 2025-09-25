@@ -109,9 +109,7 @@ export default function AdminDashboard() {
   <div className="flex items-center space-x-4">
     <UserIcon className="w-7 h-7 text-green-300 drop-shadow-[0_0_10px_rgba(134,239,172,0.8)] cursor-pointer hover:scale-110 transition" />
 
-    <h2 className="text-lg font-extrabold text-green-200 tracking-wide">
-      {user.username}
-    </h2>
+   
   </div>
 
 {/* Right side - Telegram + Download */}
@@ -134,27 +132,7 @@ export default function AdminDashboard() {
     <span className="text-xs font-medium">Join To Telegram</span>
   </a>
 
-  {/* Download button */}
-  <button
-    onClick={async () => {
-      const token = await getIdToken(auth.currentUser!);
-      const res = await fetch("http://localhost:5000/api/wallet/transactions/pdf", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
 
-      const blob = await res.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "transactions.pdf";
-      a.click();
-      window.URL.revokeObjectURL(url);
-    }}
-    className="flex flex-col items-center text-green-300 hover:text-lime-400 transition"
-  >
-    <ArrowDownTrayIcon className="w-6 h-6 mb-0.5" />
-    <span className="text-xs font-medium">Download Transactions</span>
-  </button>
 </div>
 
 

@@ -56,13 +56,9 @@ const LoginForm = ({
         boxShadow: "0 0 5px rgb(98, 155, 88), 0 0 10px rgb(118, 175, 108), 0 0 15px rgb(85, 137, 75), 0 0 20px #0f3d24, 0 0 35px #39ff14, 0 0 40px #39ff14",
       }}
     >
-      {/* 🌌 Multi-Galaxy Decoration */}
-      <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
-        {/* Random Twinkling Stars */}
-      </div>
-
+      
       <h2 className="text-3xl font-bold text-green-400 text-center mb-2 neon-text">
-        LEDERBLOCK
+        Fortunepath.com
       </h2>
       <p className="text-center text-gray-300 mb-6">
         Unlock the Future of AI in the Jungle of Innovation

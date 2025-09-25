@@ -1,105 +1,46 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { getIdToken } from "firebase/auth";
 import { auth } from "../../firebase";
 import { 
-    FiDollarSign, FiCreditCard, FiActivity, FiCpu, FiWifi, FiXCircle,
-    FiArrowUp, FiArrowDown, FiLock, FiUnlock, FiCopy, FiCheck,
-    FiTrendingUp, FiPauseCircle, FiUsers, FiAward, FiDatabase, FiGlobe, FiAlertCircle, FiCheckCircle, FiHelpCircle, FiClock
+  FiDollarSign, FiCreditCard, FiActivity, FiCpu, FiWifi,FiXCircle,
+  FiArrowUp, FiArrowDown, FiLock, FiUnlock, FiCopy, FiCheck,
+  FiTrendingUp, FiPauseCircle, FiUsers,  FiAward, FiDatabase, FiGlobe ,FiAlertCircle, FiCheckCircle, FiHelpCircle,FiClock,
 } from "react-icons/fi";
-import { FiDownload, FiCalendar } from 'react-icons/fi';
+import {  FiDownload,  FiCalendar } from 'react-icons/fi';
 import { motion, AnimatePresence } from "framer-motion";
 
-// Define types for API responses
-type ApiResponse =
-  | { success: boolean; message?: string } // For POST requests (withdrawals, deposits, stakes, trading, unlock)
-  | Summary // For /wallet/summary
-  | { deposits: Deposit[]; withdrawals: Withdrawal[] } // For /wallet/transactions
-  | { items: Stake[] } // For /stakes GET
-  | { items: Trade[] }; // For /trading GET
-
 type Summary = {
-  header: { 
-    walletBalance: number; 
-    stakeTotal: number; 
-    commissionsTotal: number; 
-    aiTradingTotal: number;  
-    totalUSDT: number; 
-    stakeProfit?: number;  
-    aiTradingProfit?: number;
+  header: { walletBalance:number; stakeTotal:number; commissionsTotal:number; aiTradingTotal:number;  totalUSDT:number; stakeProfit?: number;  aiTradingProfit?: number;
   };
-  bonus: { 
-    directDaily: number; 
-    l1_3: number; 
-    l4_6: number; 
-    leaderBonus: number; 
-  };
+  bonus: { directDaily:number; l1_3:number; l4_6:number; leaderBonus:number };
 };
-
-type Transaction = {
-  _id: string;
-  amount: number;
-  status: string;
-  createdAt: string;
-  txHash?: string;
-  toAddress?: string;
-  lockedUntil?: string;
-  lockDays?: number;
-  dailyRate?: number;
-  totalEarned?: number;
-};
-
-type Deposit = Transaction;
-type Withdrawal = Transaction;
-type Stake = Transaction & {
-  lockedUntil: string;
-  lockDays: number;
-  dailyRate: number;
-};
-type Trade = Transaction & {
-  totalEarned?: number;
-};
-
-type User = {
-  walletBalance?: number;
-  cryptoAddress?: string;
-  walletType?: string;
-};
-
-type Popup = {
-  type: "success" | "error";
-  message: string;
-} | null;
 
 export default function MyWalletPage() {
-  const [tab, setTab] = useState<"withdraw" | "bonus" | "deposit" | "transactions" | "stake" | "ai-trading">("withdraw");
-  const [deps, setDeps] = useState<Deposit[]>([]);
-  const [wds, setWds] = useState<Withdrawal[]>([]);
-  const [user, setUser] = useState<User | null>(null);
-  const [copied, setCopied] = useState<string | null>(null);
+  const [tab, setTab] = useState<"withdraw"|"bonus"|"deposit"|"transactions"|"stake"|"ai-trading">("withdraw");
+  const [summary, setSummary] = useState<Summary|null>(null);
+  const [deps, setDeps] = useState<any[]>([]);
+  const [wds, setWds] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [copied, setCopied] = useState<string|null>(null);
   const [showLoading, setShowLoading] = useState(false);
   const [progressPercent, setProgressPercent] = useState(0);
-  const [popup, setPopup] = useState<Popup>(null);
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE!;
+  const [popup, setPopup] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  const api = useCallback(async (path: string, init?: RequestInit): Promise<ApiResponse> => {
-    const currentUser = auth.currentUser;
-    const token = currentUser ? await getIdToken(currentUser, true) : "";
+  async function api(path:string, init?:RequestInit) {
+    const user = auth.currentUser;
+    const token = user ? await getIdToken(user, true) : "";
     return fetch(process.env.NEXT_PUBLIC_API_BASE + path, {
       ...init,
-      headers: { 
-        "Content-Type": "application/json", 
-        "Authorization": `Bearer ${token}` 
-      }
-    }).then(r => r.json());
-  }, []);
+      headers: { "Content-Type":"application/json", "Authorization": `Bearer ${token}` }
+    }).then(r=>r.json());
+  }
 
-  const copyToClipboard = useCallback((text: string, id: string) => {
+  const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
     setCopied(id);
     setTimeout(() => setCopied(null), 2000);
-  }, []);
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -107,7 +48,7 @@ export default function MyWalletPage() {
       if (!currentUser) return;
       const token = await getIdToken(currentUser);
       try {
-        const res = await fetch(`${API_BASE}/auth/verify-email`, {
+        const res = await fetch("http://localhost:5000/api/auth/verify-email", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ idToken: token }),
@@ -122,15 +63,16 @@ export default function MyWalletPage() {
     fetchUser();
   }, []);
   
+  
   useEffect(() => {
     (async () => {
-      const s = await api("/wallet/summary") as Summary;
+      const s = await api("/wallet/summary");
       setSummary(s);
-      const tx = await api("/wallet/transactions") as { deposits: Deposit[]; withdrawals: Withdrawal[] };
+      const tx = await api("/wallet/transactions");
       setDeps(tx.deposits || []);
       setWds(tx.withdrawals || []);
     })();
-  }, [api]);
+  }, []);
 
   const tabConfig = [
     { id: "withdraw", label: "Withdraw", icon: <FiArrowUp />, color: "from-red-400 to-orange-400" },
@@ -142,14 +84,21 @@ export default function MyWalletPage() {
   ];
   
   return (
-    <div className="min-h-screen rounded-3xl text-black bg-emerald-900 p-4 relative overflow-hidden">
-    <div className="max-w-6xl mx-auto space-y-8 relative z-10">
-
+    <div className="min-h-screen rounded-3xl text-black bg-gradient-to-br from-emerald-900 via-teal-800 to-cyan-900 p-4 relative overflow-hidden">
+    {/* Background Pattern */}
+    <div className="absolute inset-0 opacity-10">
+      <div className="absolute top-0 left-0 w-full h-full bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48ZyBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2Utb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyMCIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEwIi8+PC9nPjwvc3ZnPg==')]"></div>
+    </div>      
+      
       <div className="max-w-6xl mx-auto space-y-6">
-        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent flex items-center justify-center gap-3">
-          <FiCreditCard className="text-teal-500" />
-          My Wallet 
-        </h1>
+        
+        <h1 
+className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent flex items-center justify-center gap-3"
+          >
+            <FiCreditCard className="text-teal-500" />
+            My Wallet 
+             </h1>
+             
         {/* Summary Cards - 2 columns on mobile */}
         <div className="grid grid-cols-2 sm:grid-cols-2 bg-teal-50 backdrop-blur-sm rounded-2xl shadow-lg rounded-3xl lg:grid-cols-5 gap-2 p-3 sm:gap-4">
           <Stat 
@@ -160,7 +109,7 @@ export default function MyWalletPage() {
             accent
             gradient="from-blue-400 to-cyan-400"
           />
-          <Stat 
+           <Stat 
             title="Commissions" 
             value={summary?.header.commissionsTotal} 
             icon={<FiUsers className="text-green-500" />} 
@@ -175,8 +124,9 @@ export default function MyWalletPage() {
             mobileFull={false}
             accent
             gradient="from-green-400 to-emerald-400"
+
           />
-          <Stat 
+           <Stat 
             title="Stake Profit" 
             value={summary?.header.stakeProfit} 
             icon={<FiDollarSign className="text-green-500" />} 
@@ -184,6 +134,7 @@ export default function MyWalletPage() {
             accent
             gradient="from-green-400 to-teal-400"
           /> 
+         
           <Stat 
             title="AI Trading" 
             value={summary?.header.aiTradingTotal} 
@@ -209,47 +160,52 @@ export default function MyWalletPage() {
             gradient="from-green-700 via-teal-700 to-green-700"
           />
         </div>
-        {/* Tab Navigation */}
-        <div className="bg-green-50 backdrop-blur-sm rounded-2xl shadow-lg p-3 sm:p-4">
-          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
-            {tabConfig.map(({ id, label, icon, color }) => (
-              <button
-                key={id}
-                onClick={() => setTab(id as "withdraw" | "bonus" | "deposit" | "transactions" | "stake" | "ai-trading")}
-                className={`
-                  flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 
-                  px-3 sm:px-4 py-3 rounded-xl text-xs sm:text-xs font-medium relative overflow-hidden
-                  transition-all duration-300 transform
-                  ${
-                    tab === id
-                      ? `bg-gradient-to-r ${color} text-white shadow-[0_0_15px_rgba(0,0,0,0.25)] scale-105 ring-2 ring-offset-2 ring-green-400`
-                      : "bg-white/70 text-gray-600 border border-gray-300 hover:bg-gray-100 hover:text-indigo-700"
-                  }
-                `}
-              >
-                {/* Active indicator dot for mobile */}
-                {tab === id && (
-                  <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full sm:hidden animate-ping"></div>
-                )}
-                {/* Icon */}
-                <div
-                  className={`
-                    text-lg sm:text-base transition-transform duration-300 group-hover:scale-110
-                    ${tab === id ? "text-white" : "hidden sm:inline text-gray-700" }
-                  `}
-                >
-                  {icon}
-                </div>
-                {/* Label */}
-                <span
-                  className={`${tab === id ? "inline font-semibold" : "text-indigo-500"}`}
-                >
-                  {label}
-                </span>
-              </button>
-            ))}
-          </div>
+  
+       {/* Tab Navigation */}
+<div className="bg-green-50 backdrop-blur-sm rounded-2xl shadow-lg p-3 sm:p-4">
+  <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 sm:gap-3">
+    {tabConfig.map(({ id, label, icon, color }) => (
+      <button
+        key={id}
+        onClick={() => setTab(id as any)}
+        className={`
+          flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 
+          px-3 sm:px-4 py-3 rounded-xl text-xs sm:text-xs font-medium relative overflow-hidden
+          transition-all duration-300 transform
+          ${
+            tab === id
+              ? `bg-gradient-to-r ${color} text-white shadow-[0_0_15px_rgba(0,0,0,0.25)] scale-105 ring-2 ring-offset-2 ring-green-400`
+              : "bg-white/70 text-gray-600 border border-gray-300 hover:bg-gray-100 hover:text-indigo-700"
+          }
+        `}
+      >
+        {/* Active indicator dot for mobile */}
+        {tab === id && (
+          <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full sm:hidden animate-ping"></div>
+        )}
+
+        {/* Icon */}
+        <div
+          className={`
+            text-lg sm:text-base transition-transform duration-300 group-hover:scale-110
+            ${tab === id ? "text-white" : "hidden sm:inline text-gray-700" }
+          `}
+        >
+          {icon}
         </div>
+
+        {/* Label */}
+        <span
+          className={`${tab === id ? "inline font-semibold" : "text-indigo-500"}`}
+        >
+          {label}
+        </span>
+      </button>
+    ))}
+  </div>
+</div>
+
+        
         {/* Tab Content */}
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-5 md:p-6 animate-fade-in">
           {tab==="withdraw" && <WithdrawTab api={api} user={user} copyToClipboard={copyToClipboard} copied={copied} setShowLoading={setShowLoading} setPopup={setPopup} />}
@@ -260,6 +216,7 @@ export default function MyWalletPage() {
           {tab==="ai-trading" && <AITradingTab api={api} setShowLoading={setShowLoading} setPopup={setPopup} />}
         </div>
       </div>
+
       {/* Global 3D Cube Loading Animation */}
       <AnimatePresence>
         {showLoading && (
@@ -290,6 +247,7 @@ export default function MyWalletPage() {
               ))}
               <div className="absolute inset-0 bg-green-200/20 rounded-lg shadow-inner animate-pulse" />
             </motion.div>
+
             <div className="w-64 h-3 bg-green-300 rounded-full mt-6 overflow-hidden relative">
               <motion.div
                 className="h-3 bg-gradient-to-r from-green-300 to-emerald-400 rounded-full"
@@ -309,6 +267,7 @@ export default function MyWalletPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
       {/* Global Popup */}
       <AnimatePresence>
         {popup && (
@@ -320,15 +279,18 @@ export default function MyWalletPage() {
           >
             <div className={`bg-white p-8 rounded-2xl shadow-2xl text-center w-80 space-y-4
               ${popup.type === "success" ? "border-green-500" : "border-red-500"} border-2`}>
+              
               {popup.type === "success" ? (
                 <FiCheckCircle className="text-green-500 text-5xl mx-auto" />
               ) : (
                 <FiAlertCircle className="text-red-500 text-5xl mx-auto" />
               )}
+
               <h2 className="text-xl font-bold">
                 {popup.type === "success" ? "Success" : "Error"}
               </h2>
               <p className="text-gray-600">{popup.message}</p>
+
               <button 
                 onClick={() => setPopup(null)}
                 className="mt-4 px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg shadow hover:scale-105 transition"
@@ -339,6 +301,7 @@ export default function MyWalletPage() {
           </motion.div>
         )}
       </AnimatePresence>
+      
       <style jsx global>{`
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(10px); }
@@ -381,16 +344,15 @@ export default function MyWalletPage() {
         }
       `}</style>
     </div>
-    </div>
   );
 }
 
 function Stat({title, value, icon, accent = false, mobileFull = false, gradient}:{
-  title: string; 
-  value: number | undefined; 
-  icon: React.ReactNode; 
-  accent?: boolean;
-  mobileFull?: boolean;
+  title:string; 
+  value:any; 
+  icon:any; 
+  accent?:boolean;
+  mobileFull?:boolean;
   gradient?: string;
 }) {
   return (
@@ -408,13 +370,13 @@ function Stat({title, value, icon, accent = false, mobileFull = false, gradient}
   );
 }
 
-function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPopup }: {
-  api: (p: string, i?: RequestInit) => Promise<ApiResponse>,
-  user: User | null,
-  copyToClipboard: (text: string, id: string) => void,
-  copied: string | null,
-  setShowLoading: (show: boolean) => void,
-  setPopup: (popup: Popup) => void
+function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPopup }:{
+  api:(p:string,i?:RequestInit)=>Promise<any>,
+  user:any,
+  copyToClipboard: Function,
+  copied: string|null,
+  setShowLoading: Function,
+  setPopup: Function
 }) {
   const [amount, setAmount] = useState("");
   const [sec, setSec] = useState("");
@@ -434,12 +396,13 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
       if (user.cryptoAddress) setCryptoAddress(user.cryptoAddress);
       if (user.walletType) {
         setWalletType(user.walletType);
-        setWithdrawalDetails(prev => ({ ...prev, network: user.walletType || "" }));
+        setWithdrawalDetails(prev => ({ ...prev, network: user.walletType }));
       }
     }
   }, [user]);
 
-  const submit = async () => {
+  async function submit() {
+  
     if (!amount || !sec) {
       setPopup({ type: "error", message: "Please fill all required fields" });
       return;
@@ -469,7 +432,7 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
           toAddress: cryptoAddress,
           network: withdrawalDetails.network
         })
-      }) as { success: boolean; message?: string };
+      });
 
       setLoading(false);
       setShowLoading(false);
@@ -484,12 +447,12 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
       } else {
         setPopup({ type: "error", message: res.message || "Withdrawal failed. Please try again." });
       }
-    } catch {
+    } catch (error) {
       setLoading(false);
       setShowLoading(false);
       setPopup({ type: "error", message: "Network error. Please check your connection and try again." });
     }
-  };
+  }
 
   const quickAmounts = [50, 100, 200, 500];
 
@@ -499,28 +462,30 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
       <div className="relative bg-gradient-to-r from-green-100 to-green-50 p-4 sm:p-5 rounded-2xl border border-green-300 
                 shadow-[0_0_25px_rgba(34,197,94,0.45)] hover:shadow-[0_0_45px_rgba(34,197,94,0.7)] 
                 transition-all duration-500">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
-          {/* Left side */}
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2 sm:gap-3">
-              <div className="p-2 bg-green-300 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.8)] animate-pulse">
-                <FiArrowUp className="text-green-800 text-lg sm:text-xl" />
-              </div>
-              Withdraw Funds
-            </h2>
-            <p className="text-gray-600 mt-1 text-sm sm:text-base">
-              Transfer your earnings to your wallet
-            </p>
-          </div>
-          {/* Right side */}
-          <div className="text-left sm:text-right">
-            <div className="text-xs sm:text-sm text-gray-500">Available Balance</div>
-            <div className="text-lg sm:text-2xl font-bold text-green-600 drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]">
-              {user?.walletBalance?.toFixed(2)} USDT
-            </div>
-          </div>
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
+    {/* Left side */}
+    <div>
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2 sm:gap-3">
+        <div className="p-2 bg-green-300 rounded-full shadow-[0_0_15px_rgba(34,197,94,0.8)] animate-pulse">
+          <FiArrowUp className="text-green-800 text-lg sm:text-xl" />
         </div>
+        Withdraw Funds
+      </h2>
+      <p className="text-gray-600 mt-1 text-sm sm:text-base">
+        Transfer your earnings to your wallet
+      </p>
+    </div>
+
+    {/* Right side */}
+    <div className="text-left sm:text-right">
+      <div className="text-xs sm:text-sm text-gray-500">Available Balance</div>
+      <div className="text-lg sm:text-2xl font-bold text-green-600 drop-shadow-[0_0_10px_rgba(34,197,94,0.8)]">
+        {user?.walletBalance?.toFixed(2)} USDT
       </div>
+    </div>
+  </div>
+</div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Withdrawal Form */}
         <div className="space-y-5">
@@ -531,6 +496,7 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
               <FiCreditCard className="text-green-500" />
               Withdrawal Details
             </h3>
+            
             <div className="space-y-4">
               {/* Amount */}
               <div>
@@ -551,11 +517,13 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
                     min="10"
                     step="0.01"
                     required
+
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-4">
                     <FiDollarSign className="text-gray-400 text-lg" />
                   </div>
                 </div>
+                
                 {/* Quick amount buttons */}
                 <div className="flex flex-wrap gap-2 mt-3">
                   {quickAmounts.map(quickAmount => (
@@ -572,12 +540,14 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
                   ))}
                 </div>
               </div>
+
               {/* Security password */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center justify-between">
                   <span>Security Password </span>
-                  <span className="text-xs text-gray-500">If not set, set it in Profile  </span>
+                  <span className="text-xs text-gray-500">If not set,set it in Profile  </span>
                 </label>
+                
                 <div className="relative">
                   <input 
                     type="password" 
@@ -587,16 +557,20 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
                                transition-all duration-500 pr-12 bg-white/90" 
                     value={sec} 
                     onChange={e=>setSec(e.target.value)}
-                    required
+                                required
+
                     placeholder="Enter your security password"
                   />
                   <div className="absolute inset-y-0 right-0 flex items-center pr-4">
                     <FiLock className="text-gray-400 text-lg" />
                   </div>
                 </div>
+
               </div>
+
             </div>
           </div>
+
           {/* Submit button */}
           <button 
             onClick={submit} 
@@ -621,7 +595,10 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
               </>
             )}
           </button>
+
+      
         </div>
+
         {/* Wallet Address Section */}
         <div className="bg-green-50 p-5 rounded-2xl border border-green-200 
                         shadow-[0_0_15px_rgba(34,197,94,0.3)] hover:shadow-[0_0_40px_rgba(34,197,94,0.7)] 
@@ -633,14 +610,15 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
             <h3 className="text-lg font-semibold text-green-800">Your Wallet Address</h3>
           </div>
           {/* Wallet Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Wallet Type</label>
-            <input
-              className="w-full p-4 bg-gray-100 border border-gray-300 rounded-xl text-gray-600 cursor-not-allowed"
-              value={walletType || "Not Set"}
-              disabled
-            />
-          </div>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">Wallet Type</label>
+  <input
+    className="w-full p-4 bg-gray-100 border border-gray-300 rounded-xl text-gray-600 cursor-not-allowed"
+    value={walletType || "Not Set"}
+    disabled
+  />
+</div>
+
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Crypto Address</label>
@@ -652,9 +630,9 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
                              transition-all duration-500 pr-12" 
                   value={cryptoAddress} 
                   onChange={e=>setCryptoAddress(e.target.value)} 
-                  disabled={!!user?.cryptoAddress}
-                  placeholder="Enter your USDT wallet address"
-                />
+                disabled={!!user?.cryptoAddress} // disable if already set
+                placeholder="Enter your USDT wallet address"
+              />
                 {cryptoAddress && (
                   <button 
                     onClick={() => copyToClipboard(cryptoAddress, 'withdraw-address')}
@@ -677,9 +655,9 @@ function WithdrawTab({ api, user, copyToClipboard, copied, setShowLoading, setPo
   );
 }
 
-function BonusTab({ bonus }: {
+function BonusTab({ bonus, setPopup }:{
   bonus?: Summary["bonus"],
-  setPopup: (popup: Popup) => void
+  setPopup: Function
 }) {
   const bonusData = [
     { title: "Total Balance", value: (bonus?.directDaily||0)+(bonus?.l1_3||0)+(bonus?.l4_6||0)+(bonus?.leaderBonus||0), icon: <FiCreditCard className="text-blue-500" />, color: "from-blue-400 to-cyan-400" },
@@ -689,11 +667,14 @@ function BonusTab({ bonus }: {
     { title: "Leader Bonus", value: bonus?.leaderBonus||0, icon: <FiAward className="text-red-500" />, color: "from-red-400 to-orange-400" },
   ];
 
+
+
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in ">
       <h2 className="text-xl font-semibold text-gray-800 mb-5 flex items-center gap-2">
         <FiAward className="text-yellow-500 animate-pulse" /> Bonus Summary
       </h2>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {bonusData.map((item, index) => (
           <div key={index} className={`bg-gradient-to-r ${item.color} rounded-2xl p-5 text-white shadow-md transition-transform duration-300 hover:scale-105`}>
@@ -704,6 +685,7 @@ function BonusTab({ bonus }: {
               <span className="text-2xl font-bold">{item.value.toFixed(2)} USDT</span>
             </div>
             <h3 className="text-sm font-medium text-white/90">{item.title}</h3>
+          
           </div>
         ))}
       </div>
@@ -712,11 +694,11 @@ function BonusTab({ bonus }: {
 }
 
 function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: { 
-  api: (p: string, i?: RequestInit) => Promise<ApiResponse>, 
-  copyToClipboard: (text: string, id: string) => void, 
+  api: (p: string, i?: RequestInit) => Promise<any>, 
+  copyToClipboard: Function, 
   copied: string | null,
-  setShowLoading: (show: boolean) => void,
-  setPopup: (popup: Popup) => void
+  setShowLoading: Function,
+  setPopup: Function
 }) {
   const [amount, setAmount] = useState("");
   const [txHash, setTxHash] = useState("");
@@ -749,7 +731,7 @@ function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: 
           txHash: txHash.trim(), 
           network 
         }),
-      }) as { success: boolean; message?: string };
+      });
 
       setLoading(false);
       setShowLoading(false);
@@ -761,7 +743,7 @@ function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: 
       } else {
         setPopup({ type: "error", message: res.message || "Deposit failed" });
       }
-    } catch {
+    } catch (error) {
       setLoading(false);
       setShowLoading(false);
       setPopup({ type: "error", message: "An error occurred while processing your deposit" });
@@ -769,7 +751,7 @@ function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: 
   };
 
   return (
-    <div className="space-y-6 text-black">
+    <div className="space-y-6 text-black ">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-100 animate-fade-in">
         <div>
@@ -782,6 +764,7 @@ function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: 
           <p className="text-gray-600 mt-1">Add funds to your account using USDT</p>
         </div>
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column */}
         <div className="space-y-5">
@@ -814,6 +797,7 @@ function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: 
               ))}
             </div>
           </div>
+
           {/* Addresses */}
           <div className="bg-teal-50 p-5 rounded-2xl shadow-sm border border-gray-200 animate-fade-in">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -843,6 +827,7 @@ function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: 
               </div>
             ))}
           </div>
+
           {/* Deposit Form */}
           <div className="bg-lime-50 p-5 rounded-2xl shadow-sm border border-gray-200 animate-fade-in">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
@@ -868,6 +853,7 @@ function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: 
                 </div>
                 <p className="text-xs text-gray-500 mt-1">Minimum deposit: 10 USDT</p>
               </div>
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Transaction Hash</label>
                 <div className="relative">
@@ -884,6 +870,7 @@ function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: 
               </div>
             </div>
           </div>
+
           {/* Submit Button */}
           <button 
             onClick={submit} 
@@ -909,12 +896,13 @@ function DepositTab({ api, copyToClipboard, copied, setShowLoading, setPopup }: 
 }
 
 function TransactionsTab({ deps, wds, setPopup }: { 
-  deps: Deposit[]; 
-  wds: Withdrawal[]; 
-  setPopup: (popup: Popup) => void;
+  deps: any[]; 
+  wds: any[]; 
+  setPopup: Function 
 }) {
   const [activeTab, setActiveTab] = useState<"deposits" | "withdrawals">("deposits");
 
+  // ✅ Status pill with 3 main states
   const StatusPill = ({ status }: { status: string }) => {
     const statusConfig: Record<
       string,
@@ -959,11 +947,12 @@ function TransactionsTab({ deps, wds, setPopup }: {
     );
   };
   
+  // ✅ Transaction card (mobile responsive)
   const TransactionCard = ({
     transaction,
     type,
   }: {
-    transaction: Transaction;
+    transaction: any;
     type: "deposit" | "withdrawal";
   }) => {
     const isDeposit = type === "deposit";
@@ -971,9 +960,9 @@ function TransactionsTab({ deps, wds, setPopup }: {
     const iconColor = isDeposit ? "text-green-500" : "text-red-500";
     const bgColor = isDeposit ? "bg-green-50" : "bg-red-50";
 
-    const handleCopy = (text: string, copyType: string) => {
+    const handleCopy = (text: string, type: string) => {
       navigator.clipboard.writeText(text);
-      setPopup({ type: "success", message: `${copyType} copied to clipboard!` });
+      setPopup({ type: "success", message: `${type} copied to clipboard!` });
     };
 
     return (
@@ -997,6 +986,7 @@ function TransactionsTab({ deps, wds, setPopup }: {
               </div>
             </div>
           </div>
+
           {/* Right section */}
           <div className="text-left sm:text-right">
             <p className="text-xs text-gray-500">
@@ -1004,6 +994,7 @@ function TransactionsTab({ deps, wds, setPopup }: {
             </p>
           </div>
         </div>
+
         {/* Bottom info */}
         <div className="mt-4 pt-4 border-t border-gray-100">
           <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 break-all">
@@ -1012,7 +1003,7 @@ function TransactionsTab({ deps, wds, setPopup }: {
                 <FiCreditCard className="text-gray-400" />
                 <span className="font-mono truncate">{transaction.txHash}</span>
                 <button
-                  onClick={() => handleCopy(transaction.txHash || "", "Transaction hash")}
+                  onClick={() => handleCopy(transaction.txHash, "Transaction hash")}
                   className="text-gray-400 hover:text-gray-600 ml-2 transition-transform transform hover:scale-110"
                 >
                   <FiCopy size={14} />
@@ -1023,7 +1014,7 @@ function TransactionsTab({ deps, wds, setPopup }: {
                 <FiCopy className="text-gray-400" />
                 <span className="font-mono truncate">{transaction.toAddress}</span>
                 <button
-                  onClick={() => handleCopy(transaction.toAddress || "", "Wallet address")}
+                  onClick={() => handleCopy(transaction.toAddress, "Wallet address")}
                   className="text-gray-400 hover:text-gray-600 ml-2 transition-transform transform hover:scale-110"
                 >
                   <FiCopy size={14} />
@@ -1060,6 +1051,7 @@ function TransactionsTab({ deps, wds, setPopup }: {
           </div>
         </div>
       </div>
+
       {/* Tab Navigation (scrollable on mobile) */}
       <div className="bg-white rounded-2xl shadow-sm p-3 sm:p-4 animate-fade-in">
         <div className="flex space-x-3 overflow-x-auto scrollbar-hide">
@@ -1089,6 +1081,7 @@ function TransactionsTab({ deps, wds, setPopup }: {
               {deps.length}
             </span>
           </button>
+
           <button
             onClick={() => setActiveTab("withdrawals")}
             className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-3 rounded-xl transition-all transform hover:scale-105 ${
@@ -1117,6 +1110,7 @@ function TransactionsTab({ deps, wds, setPopup }: {
           </button>
         </div>
       </div>
+
       {/* Transaction Cards */}
       <div className="space-y-4">
         {activeTab === "deposits" ? (
@@ -1135,9 +1129,10 @@ function TransactionsTab({ deps, wds, setPopup }: {
                 No deposits yet
               </h3>
               <p className="mt-1 text-gray-500 text-sm sm:text-base">
-                You haven&apos;t made any deposits yet.
+                You haven't made any deposits yet.
               </p>
               <button 
+                onClick={() => setPopup({ type: "info", message: "Navigate to Deposit tab to make your first deposit" })}
                 className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105"
               >
                 <FiArrowDown className="text-sm" />
@@ -1160,9 +1155,10 @@ function TransactionsTab({ deps, wds, setPopup }: {
               No withdrawals yet
             </h3>
             <p className="mt-1 text-gray-500 text-sm sm:text-base">
-              You haven&apos;t made any withdrawals yet.
+              You haven't made any withdrawals yet.
             </p>
             <button 
+              onClick={() => setPopup({ type: "info", message: "Navigate to Withdraw tab to make your first withdrawal" })}
               className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all transform hover:scale-105"
             >
               <FiArrowUp className="text-sm" />
@@ -1171,6 +1167,7 @@ function TransactionsTab({ deps, wds, setPopup }: {
           </div>
         )}
       </div>
+
       {/* Summary Stats */}
       {(deps.length > 0 || wds.length > 0) && (
         <div className="bg-lime-50 p-5 rounded-2xl shadow-sm border border-gray-200 animate-fade-in">
@@ -1225,13 +1222,13 @@ function TransactionsTab({ deps, wds, setPopup }: {
 }
 
 function StakeTab({ api, setShowLoading, setPopup }: { 
-  api: (path: string, init?: RequestInit) => Promise<ApiResponse>,
-  setShowLoading: (show: boolean) => void,
-  setPopup: (popup: Popup) => void
+  api: (path: string, init?: RequestInit) => Promise<any>,
+  setShowLoading: Function,
+  setPopup: Function
 }) {
   const [amount, setAmount] = useState("");
   const [plan, setPlan] = useState("7");
-  const [stakes, setStakes] = useState<Stake[]>([]);
+  const [stakes, setStakes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const stakePlans = [
@@ -1240,20 +1237,18 @@ function StakeTab({ api, setShowLoading, setPopup }: {
     { id: "30", days: 30, rate: 0.015, label: "30 Days", color: "from-indigo-500 to-indigo-600", icon: <FiCalendar className="text-indigo-100" /> }
   ];
   
-  const fetchStakes = useCallback(async () => {
+  const fetchStakes = async () => {
     try {
-      const res = await api("/stakes") as { items: Stake[] };
+      const res = await api("/stakes");
       setStakes(res.items || []);
-    } catch {
+    } catch (error) {
       setPopup({ type: "error", message: "Failed to fetch stakes" });
     }
-  }, [api, setPopup]);
+  };
 
-  useEffect(() => { 
-    fetchStakes(); 
-  }, [fetchStakes]);
+  useEffect(() => { fetchStakes(); }, []);
 
-  const submit = async () => {
+  async function submit() {
     if (!amount || +amount < 50) {
       setPopup({ type: "error", message: "Minimum stake amount is 50 USDT" });
       return;
@@ -1263,9 +1258,9 @@ function StakeTab({ api, setShowLoading, setPopup }: {
     setShowLoading(true);
     try {
       const res = await api("/stakes", { 
-        method: "POST", 
-        body: JSON.stringify({ amount: +amount, lockDays: +plan })
-      }) as { success: boolean; message?: string };
+        method:"POST", 
+        body: JSON.stringify({ amount:+amount, lockDays:+plan })
+      });
       
       setLoading(false);
       setShowLoading(false);
@@ -1277,20 +1272,20 @@ function StakeTab({ api, setShowLoading, setPopup }: {
       } else {
         setPopup({ type: "error", message: res.message || "Failed to stake" });
       }
-    } catch {
+    } catch (error) {
       setLoading(false);
       setShowLoading(false);
       setPopup({ type: "error", message: "An error occurred while processing your stake" });
     }
-  };
+  }
 
-  const handleUnstake = async (stakeId: string, amt: number) => {
+  async function handleUnstake(stakeId:string, amt:number) {
     setShowLoading(true);
     try {
       const res = await api("/stakes/unstake", { 
-        method: "POST", 
+        method:"POST", 
         body: JSON.stringify({ stakeId, amount: amt }) 
-      }) as { success: boolean; message?: string };
+      });
       
       setShowLoading(false);
       
@@ -1300,16 +1295,16 @@ function StakeTab({ api, setShowLoading, setPopup }: {
       } else {
         setPopup({ type: "error", message: res.message || "Failed to unstake" });
       }
-    } catch {
+    } catch (error) {
       setShowLoading(false);
       setPopup({ type: "error", message: "Error unstaking" });
     }
-  };
+  }
 
   const selectedPlan = stakePlans.find(p => p.id === plan);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6   ">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-2xl border border-purple-100">
         <div className="flex items-center justify-between">
@@ -1330,15 +1325,18 @@ function StakeTab({ api, setShowLoading, setPopup }: {
           </div>
         </div>
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left Column - Stake Form */}
         <div className="space-y-5">
+
           {/* Plan Selection */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <FiCalendar className="text-blue-500" />
               Choose Plan
             </h3>
+            
             <div className="grid grid-cols-1 gap-3">
               {stakePlans.map(planOption => (
                 <div 
@@ -1360,7 +1358,7 @@ function StakeTab({ api, setShowLoading, setPopup }: {
                           {planOption.label}
                         </div>
                         <div className="text-sm text-gray-600">
-                          {(planOption.rate * 100).toFixed(2)}% daily reward
+                        {(planOption.rate * 100).toFixed(2)}% daily reward
                         </div>
                       </div>
                     </div>
@@ -1374,12 +1372,14 @@ function StakeTab({ api, setShowLoading, setPopup }: {
               ))}
             </div>
           </div>
+
           {/* Amount Input */}
           <div className="bg-white p-5 rounded-2xl text-black shadow-sm border border-gray-200">
             <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <FiDollarSign className="text-green-500" />
               Stake Amount
             </h3>
+            
             <div className="relative">
               <input 
                 type="number" 
@@ -1394,6 +1394,7 @@ function StakeTab({ api, setShowLoading, setPopup }: {
               </div>
             </div>
             <p className="text-xs text-gray-500 mt-2">Minimum stake: 50 USDT</p>
+
             {/* Quick Amount Buttons */}
             <div className="flex flex-wrap gap-2 mt-4">
               {[50, 100, 200, 500, 1000].map(quickAmount => (
@@ -1408,6 +1409,8 @@ function StakeTab({ api, setShowLoading, setPopup }: {
               ))}
             </div>
           </div>
+
+          
           {/* Projected Earnings */}
           {selectedPlan && amount && +amount >= 50 && (
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-2xl border border-blue-200">
@@ -1437,6 +1440,7 @@ function StakeTab({ api, setShowLoading, setPopup }: {
               </div>
             </div>
           )}
+
           {/* Stake Button */}
           <button 
             onClick={submit} 
@@ -1456,6 +1460,7 @@ function StakeTab({ api, setShowLoading, setPopup }: {
             )}
           </button>
         </div>
+
         {/* Right Column - Active Stakes */}
         <div className="space-y-5">
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
@@ -1466,6 +1471,7 @@ function StakeTab({ api, setShowLoading, setPopup }: {
                 {stakes.length}
               </span>
             </h3>
+            
             {stakes.length > 0 ? (
               <div className="space-y-4">
                 {stakes.map(s => {
@@ -1501,10 +1507,12 @@ function StakeTab({ api, setShowLoading, setPopup }: {
                           {unlocked ? 'Unlocked' : `${daysLeft} days left`}
                         </span>
                       </div>
+                      
                       <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
                         <span>Unlocks: {new Date(s.lockedUntil).toLocaleDateString()}</span>
                         <span>Earned: {(s.amount * s.dailyRate * s.lockDays).toFixed(2)} USDT</span>
                       </div>
+                      
                       <button 
                         onClick={() => handleUnstake(s._id, s.amount)} 
                         className={`w-full py-3 px-4 rounded-xl text-sm font-medium transition-all ${
@@ -1564,29 +1572,31 @@ function StakeTab({ api, setShowLoading, setPopup }: {
   );
 }
 
+
 function AITradingTab({ api, setShowLoading, setPopup }: { 
-  api: (path: string, init?: RequestInit) => Promise<ApiResponse>,
-  setShowLoading: (show: boolean) => void,
-  setPopup: (popup: Popup) => void
+  api: (path: string, init?: RequestInit) => Promise<any>,
+  setShowLoading: Function,
+  setPopup: Function
 }) {
   const [amount, setAmount] = useState("");
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [trades, setTrades] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchTrades = useCallback(async () => {
+  const fetchTrades = async () => {
     try {
-      const res = await api("/trading") as { items: Trade[] };
+      const res = await api("/trading");
       setTrades(res.items || []);
-    } catch {
+    } catch (err) {
       setPopup({ type: "error", message: "Failed to fetch trades" });
     }
-  }, [api, setPopup]);
+  };
 
   useEffect(() => {
     fetchTrades();
-  }, [fetchTrades]);
+  }, []);
 
-  const deposit = async () => {
+  // Deposit / Start Trading
+  async function deposit() {
     if (!amount) {
       setPopup({ type: "error", message: "Please enter an amount" });
       return;
@@ -1603,7 +1613,7 @@ function AITradingTab({ api, setShowLoading, setPopup }: {
       const res = await api("/trading", {
         method: "POST",
         body: JSON.stringify({ amount: +amount }),
-      }) as { success: boolean; message?: string };
+      });
       
       setLoading(false);
       setShowLoading(false);
@@ -1615,14 +1625,15 @@ function AITradingTab({ api, setShowLoading, setPopup }: {
       } else {
         setPopup({ type: "error", message: res.message || "Failed to invest" });
       }
-    } catch {
+    } catch (error) {
       setLoading(false);
       setShowLoading(false);
       setPopup({ type: "error", message: "An error occurred while processing your investment" });
     }
-  };
+  }
 
-  const unlockInvestment = async (tradeId: string) => {
+  // 🔑 Unlock Completed Investment
+  async function unlockInvestment(tradeId: string) {
     if (!tradeId) {
       setPopup({ type: "error", message: "Invalid trade ID" });
       return;
@@ -1632,22 +1643,23 @@ function AITradingTab({ api, setShowLoading, setPopup }: {
     try {
       const res = await api(`/trading/unlock/${tradeId}`, {
         method: "POST",
-      }) as { success: boolean; message?: string };
+      });
 
       setShowLoading(false);
       
       if (res.success) {
         setPopup({ type: "success", message: res.message || "Funds unlocked successfully!" });
-        fetchTrades();
+        fetchTrades(); // refresh trades
       } else {
         setPopup({ type: "error", message: res.message || "Failed to unlock trade" });
       }
-    } catch {
+    } catch (error) {
       setShowLoading(false);
       setPopup({ type: "error", message: "Error unlocking investment" });
     }
-  };
+  }
 
+  // Stats
   const totalInvested = trades.reduce((total, trade) => total + trade.amount, 0);
   const totalEarned = trades.reduce((total, trade) => total + (trade.totalEarned || 0), 0);
 
@@ -1856,6 +1868,3 @@ function AITradingTab({ api, setShowLoading, setPopup }: {
     100% { transform: translateY(0px); }
   }
 `}</style>
-
-
-
