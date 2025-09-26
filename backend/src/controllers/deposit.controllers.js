@@ -65,7 +65,6 @@ async function updateUplineLevels(userId) {
     current = await User.findById(current.referredBy).select("referredBy");
   }
 }
-// controllers/deposit.controller.js
 
 export const adminDepositToUser = async (req, res) => {
   try {
@@ -114,61 +113,72 @@ export const adminDepositToUser = async (req, res) => {
   }
 };
 
-
-
-
 export const adminApproveDeposit = async (req, res) => {
   try {
     const { id } = req.params;
-    const dep = await Deposit.findById(id).populate('user', 'username email');
-    if (!dep) return res.status(404).json({ message: "Deposit not found" });
-    
-    // Allow approval if PENDING or HOLD
-    if (!["PENDING", "HOLD"].includes(dep.status))
-      return res.status(400).json({ message: "Already processed" });
 
+    const dep = await Deposit.findById(id).populate("user", "username email");
+    if (!dep) {
+      return res.status(404).json({ success: false, message: "Deposit not found" });
+    }
+
+    if (dep.status !== "PENDING" && dep.status !== "HOLD") {
+      return res.status(400).json({ success: false, message: "Deposit already processed" });
+    }
+
+    // Approve deposit
     dep.status = "APPROVED";
     await dep.save();
 
-    const user = await User.findById(dep.user._id);
+    const user = await User.findById(dep.user);
+
+    // ✅ Update BOTH balances
     user.totalUSDT = (user.totalUSDT || 0) + dep.amount;
+    user.walletBalance = (user.walletBalance || 0) + dep.amount;
+
+    // ✅ Unlock referral if 100+ reached
     if (!user.referralUnlocked && user.totalUSDT >= 100) {
       user.referralUnlocked = true;
     }
 
+    // ✅ First deposit logic
     if (!user.firstDepositDone) {
       user.firstDepositDone = true;
-      await user.save();
       dep.isFirstDepositForUser = true;
-      await dep.save();
 
       await onFirstDepositConfirmed(user._id, dep._id, dep.amount, user.level ?? 0);
+
       if (user.referredBy) {
-        await updateUserLevel(user.referredBy);
+        await User.updateOne(
+          { _id: user.referredBy },
+          { $addToSet: { referredUsers: user._id } }
+        );
+        await User.updateOne(
+          { _id: user.referredBy },
+          { $inc: { totalDirectRefs: 1 } }
+        );
       }
-    } else {
-      await user.save();
     }
 
-    // Send approval email (don't await to avoid blocking response)
-    sendDepositStatusEmail(
-      dep.user.email, 
-      dep.user.username, 
-      'APPROVED', 
-      { 
-        amount: dep.amount, 
-        createdAt: dep.createdAt, 
-        txHash: dep.txHash, 
-        systemWallet: dep.systemWallet 
-      }
-    ).catch(error => {
-      console.error('Failed to send approval email:', error);
-    });
+    await user.save();
 
-    res.json({ success:true, message:"Deposit approved" });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ success:false, message: "Approval failed" });
+    // ✅ Send notification
+    sendDepositStatusEmail(
+      dep.user.email,
+      dep.user.username,
+      "APPROVED",
+      {
+        amount: dep.amount,
+        createdAt: dep.createdAt,
+        txHash: dep.txHash,
+        systemWallet: dep.systemWallet
+      }
+    ).catch(console.error);
+
+    res.json({ success: true, message: "Deposit approved and wallet updated" });
+  } catch (err) {
+    console.error("Approve deposit error:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 

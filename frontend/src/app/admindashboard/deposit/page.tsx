@@ -20,7 +20,7 @@ interface Deposit {
   _id: string;
   amount: number;
   txHash: string;
-  walletType?: string;
+  network?: string;
   status: "PENDING" | "APPROVED" | "REJECTED" | "HOLD";
   reason?: string;
   createdAt: string;
@@ -341,7 +341,7 @@ export default function AdminDepositsPage() {
                       </td>
                       <td className="py-4 px-4">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">
-                          {d.walletType || "ERC20"}
+                          {d.network}
                         </span>
                       </td>
                       <td className="py-4 px-4">

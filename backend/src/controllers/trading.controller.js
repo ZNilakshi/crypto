@@ -58,7 +58,7 @@ export const unlockTrading = async (req, res) => {
   const user = await User.findById(trade.user);
 
   // ✅ Only return the principal — profits are already credited daily in getWalletSummary
-  user.walletBalance += trade.amount;
+  user.walletBalance += trade.amount + trade.totalEarned;
 
   trade.active = false;
   await trade.save();

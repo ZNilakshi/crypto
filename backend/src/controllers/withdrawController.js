@@ -55,7 +55,6 @@ export const adminListWithdrawals = async (req, res) => {
 
 
 
-// controllers/withdrawController.js
 
 export const adminApproveWithdrawal = async (req, res) => {
   try {
@@ -87,20 +86,6 @@ export const adminApproveWithdrawal = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check if user has sufficient balance
-    console.log(`💰 Checking balance: User has ${user.walletBalance}, withdrawal is ${withdrawal.amount}`);
-    if (user.walletBalance < withdrawal.amount) {
-      console.log('❌ Insufficient balance');
-      return res.status(400).json({ 
-        success: false, 
-        message: "Insufficient balance" 
-      });
-    }
-
-    // Deduct the amount from user's balance
-    user.walletBalance -= withdrawal.amount;
-    await user.save();
-    console.log(`✅ Balance updated: New balance = ${user.walletBalance}`);
 
     // Update withdrawal status
     withdrawal.status = "APPROVED";
@@ -154,7 +139,11 @@ export const adminRejectWithdrawal = async (req, res) => {
         message: `Withdrawal already ${withdrawal.status.toLowerCase()}` 
       });
     }
-
+    const user = await User.findById(withdrawal.user._id);
+    if (user) {
+      user.walletBalance += withdrawal.totalDeduction; 
+      await user.save();
+    }
     withdrawal.status = "REJECTED";
     withdrawal.reason = reason || "No reason provided";
     await withdrawal.save();
